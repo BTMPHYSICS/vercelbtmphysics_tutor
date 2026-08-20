@@ -490,4 +490,578 @@
   <div class="input-area">
     <input type="file" id="imageFileInput" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
     <button class="file-btn" onclick="document.getElementById('imageFileInput').click()" title="사진/이미지 첨부">📷</button>
-    <textarea id="questionInput"
+    <textarea id="questionInput" placeholder="물리 질문을 입력하세요..."></textarea>
+    <button id="sendBtn" onclick="handleSend()">전송</button>
+  </div>
+
+  <div class="modal-overlay" id="customAlertModal">
+    <div class="modal-box" style="max-width: 380px;">
+      <div class="modal-header">
+        <h2 id="alertTitle">📌 볼츠만물리 알림</h2>
+        <button class="close-btn" onclick="closeAlertModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage" style="font-size: 14px; line-height: 1.6; color: #e6edf3;"></p>
+      </div>
+      <div class="modal-footer" id="alertFooter">
+        <button class="modal-btn-primary" onclick="closeAlertModal()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="reportModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>📊 물리 학습 활동 보고서</h2>
+        <button class="close-btn" onclick="closeReportModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-row">
+          <span>학생 정보</span>
+          <b id="modalStudentName">-</b>
+        </div>
+        <div class="info-row">
+          <span>총 질문 횟수</span>
+          <b id="modalQCount">0 회</b>
+        </div>
+        <div class="info-row">
+          <span>종합 학습 점수</span>
+          <b id="modalTotalScore" style="color: #58a6ff; font-size: 15px;">0 점</b>
+        </div>
+
+        <div class="gauge-section">
+          <div class="gauge-item">
+            <div class="gauge-label">
+              <span>학습 참여도 (질문 빈도)</span>
+              <span id="modalParticipationVal">0%</span>
+            </div>
+            <div class="gauge-bar-bg">
+              <div class="gauge-bar-fill fill-blue" id="modalParticipationBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="gauge-item">
+            <div class="gauge-label">
+              <span>학습 성실도 (질문 구체성)</span>
+              <span id="modalSincerityVal">0%</span>
+            </div>
+            <div class="gauge-bar-bg">
+              <div class="gauge-bar-fill fill-green" id="modalSincerityBar" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <div class="gauge-item">
+            <div class="gauge-label">
+              <span>개념 이해도 (대화 성숙도)</span>
+              <span id="modalUnderstandingVal">0%</span>
+            </div>
+            <div class="gauge-bar-bg">
+              <div class="gauge-bar-fill fill-purple" id="modalUnderstandingBar" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn-primary" onclick="exportToNotionMarkdown()">Notion용 MD 파일 다운로드</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+
+    const GEMINI_API_KEY = "AQ.Ab8RN6JIZhw_rcrkysD5Cl-raQWwAtsCjRag7JHn-Fw090ctOQ";
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyh_LWY0ZmWlLIhOP4KOjB9bRSASP9NaSaFNJBqKmE3r8LdtpTZgFrTDGyPzXvSP3dbCQ/exec";
+
+    const SYSTEM_INSTRUCTION = `
+당신은 '볼츠만물리' 학원의 공식 물리 학습 전용 AI 튜터인 'btmphysics AI Tutor'입니다.
+
+[핵심 제한 규칙: 물리 외 질문 원천 차단]
+1. 당신의 유일한 역할은 '물리학(Physics) 학습'과 '볼츠만물리 학원 관련 안내'입니다.
+2. 물리학과 직접 관련이 없는 질문(예: 타 과목 질문, 일상 대화, 게임, 연예인, 프로그래밍 코딩 요청, 잡담, 창작 등)에는 절대 내용을 직접 답변하지 마세요.
+3. 물리 외의 질문이 들어왔을 때는 단호하고 정중하게 아래와 같이 답변을 거절하고 물리 질문을 유도하세요:
+   - 거절 안내 예시: "저는 볼츠만물리 학원의 물리 전용 AI 튜터입니다. 물리학 학습 및 개념과 관련된 질문만 답변할 수 있습니다. 궁금한 물리 질문을 남겨주세요."
+
+[신원 및 명칭 규칙]
+1. '볼츠만 쌤' 또는 '볼츠만 선생님':
+   - 19세기 물리학자 루트비히 볼츠만이 아니라, '볼츠만물리' 학원의 원장 선생님을 의미합니다.
+   - 학생이 "볼츠만 쌤이 누구야?"라고 물으면 "볼츠만물리 학원에서 여러분의 물리를 열정적으로 지도해 주시는 원장 선생님"으로 안내하세요.
+2. 'btmphysics' 및 'btmphysics AI Tutor':
+   - 볼츠만물리 학원(인터넷 활동명 btmphysics)에서 학생들의 물리 질의응답을 돕기 위해 운영하는 전용 AI 학습 도우미입니다.
+3. 물리학자 '루트비히 볼츠만':
+   - "통계역학 볼츠만", "볼츠만 상수", "엔트로피 공식" 등 순수 물리 개념을 물을 때만 역사적 물리학자로 설명하세요.
+
+[답변 작성 및 지도 방식]
+1. 완결성 있는 충실한 1차 답변 제공:
+   - 학생의 첫 질문(또는 사진 속 문제/도표)에 대해 질문의 핵심 원리, 공식 유도, 물리적 직관을 빠짐없이 충실하고 명쾌하게 설명하세요.
+   - 이미지가 첨부된 경우, 이미지 안의 조건과 물리량(질량, 거리, 저항값, 그래프 축 등)을 먼저 파악하고 이를 기반으로 단계별 풀이를 제공하세요.
+   - 강의록(레퍼런스 데이터)에 수록된 핵심 판서 및 풀이 순서를 최대한 존중하여 체계적으로 서술합니다.
+2. 심화 탐구 및 사고 확장을 위한 후속 질문(추가 발문) 제시:
+   - 답변의 맨 마지막 부분에, 학생이 방금 배운 개념을 제대로 체화했는지 점검하거나 연계된 물리 상황을 상상해볼 수 있는 '핵심 추가 질문 1~2가지'를 정중하게 건네주세요. (예: "만약 이 상황에서 저항이 병렬로 하나 더 연결된다면 전체 전류는 어떻게 바뀔까요?")
+3. 스타일 및 문장 규칙:
+   - 전문적인 물리 용어를 정확하게 사용하되, 직관적인 비유와 예시를 들어 명쾌하게 설명합니다.
+   - 문장에 강조용 별표(**)와 같은 불필요한 특수 기호나 이모티콘은 사용하지 않고 단정하고 깔끔한 문장으로 작성합니다.
+   - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
+   - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
+
+[시뮬레이션 요청 시]
+- 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
+- 화면 크기 맞춤 규칙: 
+  1) body 스타일에 margin:0; padding:4px; overflow:hidden; width:100vw; height:100vh; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:space-between; 를 적용하세요.
+  2) canvas는 width="320" height="200" 스타일에 max-width:100%; max-height:calc(100vh - 45px); object-fit:contain; 을 주어 스크롤바가 전혀 생기지 않고 화면에 꽉 차게 렌더링되도록 작성하세요.
+`;
+
+    let lectureKnowledgeBase = "";
+    let chatHistory = [];
+    let rawChatLogs = [];
+    let questionCount = 0;
+    let currentScore = 0;
+    let participationRate = 0;
+    let sincerityRate = 0;
+    let understandingRate = 0;
+
+    let selectedImageBase64 = null;
+    let selectedImageMime = null;
+
+    async function loadLectureData() {
+      try {
+        const listRes = await fetch('/data/list.json');
+        if (!listRes.ok) return;
+        const fileList = await listRes.json();
+
+        let combinedText = "\n\n[학원 전용 강의 및 동영상 추출 레퍼런스 데이터]\n";
+        for (const filePath of fileList) {
+          const res = await fetch(filePath);
+          if (res.ok) {
+            const mdText = await res.text();
+            combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
+          }
+        }
+        lectureKnowledgeBase = combinedText;
+      } catch (err) {
+        console.log("강의 데이터 로드 건너뜀:", err);
+      }
+    }
+
+    window.onload = function() {
+      const savedId = localStorage.getItem('btm_student_id');
+      if (savedId) {
+        document.getElementById('studentId').value = savedId;
+      }
+      loadLocalHistory();
+      loadLectureData();
+    };
+
+    function clearInputAlert() {
+      const input = document.getElementById('studentId');
+      input.classList.remove('input-alert');
+    }
+
+    function saveStudentId() {
+      const id = document.getElementById('studentId').value.trim();
+      localStorage.setItem('btm_student_id', id);
+    }
+
+    function saveLocalHistory() {
+      localStorage.setItem('btm_chat_history', JSON.stringify(chatHistory));
+      localStorage.setItem('btm_raw_logs', JSON.stringify(rawChatLogs));
+      localStorage.setItem('btm_q_count', questionCount.toString());
+      localStorage.setItem('btm_score', currentScore.toString());
+    }
+
+    function loadLocalHistory() {
+      const savedHistory = localStorage.getItem('btm_chat_history');
+      const savedLogs = localStorage.getItem('btm_raw_logs');
+      const savedCount = localStorage.getItem('btm_q_count');
+      const savedScore = localStorage.getItem('btm_score');
+
+      if (savedHistory && savedLogs) {
+        chatHistory = JSON.parse(savedHistory);
+        rawChatLogs = JSON.parse(savedLogs);
+        questionCount = parseInt(savedCount) || 0;
+        currentScore = parseInt(savedScore) || 0;
+
+        document.getElementById('qCountDisplay').innerText = questionCount;
+        document.getElementById('scoreDisplay').innerText = currentScore;
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = '';
+
+        rawChatLogs.forEach(item => {
+          appendMessageUI(item.sender, item.text, false, item.img);
+        });
+      }
+    }
+
+    function showAlert(title, message, onConfirm = null) {
+      document.getElementById('alertTitle').innerText = title;
+      document.getElementById('alertMessage').innerText = message;
+      const footer = document.getElementById('alertFooter');
+      
+      if (onConfirm) {
+        footer.innerHTML = `
+          <button class="modal-btn-secondary" onclick="closeAlertModal()">취소</button>
+          <button class="modal-btn-primary" id="alertConfirmBtn">확인</button>
+        `;
+        document.getElementById('alertConfirmBtn').onclick = function() {
+          closeAlertModal();
+          onConfirm();
+        };
+      } else {
+        footer.innerHTML = `<button class="modal-btn-primary" onclick="closeAlertModal()">확인</button>`;
+      }
+      
+      document.getElementById('customAlertModal').style.display = 'flex';
+    }
+
+    function closeAlertModal() {
+      document.getElementById('customAlertModal').style.display = 'none';
+    }
+
+    /* 이미지 선택 및 미리보기 처리 */
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      selectedImageMime = file.type;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const fullDataUrl = e.target.result;
+        selectedImageBase64 = fullDataUrl.split(',')[1];
+        
+        document.getElementById('previewImg').src = fullDataUrl;
+        document.getElementById('previewFileName').innerText = file.name;
+        document.getElementById('imagePreviewBar').style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearSelectedImage() {
+      selectedImageBase64 = null;
+      selectedImageMime = null;
+      document.getElementById('imageFileInput').value = '';
+      document.getElementById('imagePreviewBar').style.display = 'none';
+    }
+
+    function renderMathAndCode(element) {
+      if (window.renderMathInElement) {
+        renderMathInElement(element, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+      element.querySelectorAll('pre code').forEach((el) => {
+        hljs.highlightElement(el);
+      });
+    }
+
+    function parseContent(text) {
+      let cleanText = text.replace(/^[ \t]*[-=]{3,}[ \t]*$/gm, '');
+
+      const htmlBlockRegex = /```html\n([\s\S]*?)```/g;
+      let match;
+      let lastIndex = 0;
+      let finalHtml = '';
+
+      while ((match = htmlBlockRegex.exec(cleanText)) !== null) {
+        let beforeText = cleanText.substring(lastIndex, match.index);
+        finalHtml += formatMarkdownText(beforeText);
+
+        const codeContent = match[1];
+        const blob = new Blob([codeContent], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        finalHtml += `
+          <div class="sim-container">
+            <button class="sim-toggle-btn" onclick="this.nextElementSibling.src='${blobUrl}'">▶ 실시간 물리 시뮬레이터 재생</button>
+            <iframe class="sim-frame" src="${blobUrl}"></iframe>
+          </div>
+        `;
+        lastIndex = htmlBlockRegex.lastIndex;
+      }
+
+      finalHtml += formatMarkdownText(cleanText.substring(lastIndex));
+      return finalHtml;
+    }
+
+    function formatMarkdownText(text) {
+      let parsed = text;
+
+      parsed = parsed.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+      });
+
+      parsed = parsed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      parsed = parsed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      parsed = parsed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      parsed = parsed.replace(/\n\n/g, '<br><br>');
+      parsed = parsed.replace(/\n/g, '<br>');
+
+      return parsed;
+    }
+
+    function appendMessageUI(sender, text, isLoading = false, imgSrc = null) {
+      const chatBox = document.getElementById('chat-box');
+      const row = document.createElement('div');
+      row.className = `msg-row ${sender === 'user' ? 'user-row' : 'bot-row'}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.innerText = sender === 'user' ? '🧑‍🎓' : '👨‍🏫';
+
+      const content = document.createElement('div');
+      content.className = 'msg-content';
+
+      if (imgSrc) {
+        const imgEl = document.createElement('img');
+        imgEl.src = imgSrc;
+        imgEl.className = 'chat-img-preview';
+        content.appendChild(imgEl);
+      }
+
+      if (isLoading) {
+        const span = document.createElement('span');
+        span.innerHTML = '<span class="spinner"></span>답변을 준비하고 있습니다...';
+        content.appendChild(span);
+      } else {
+        const textWrapper = document.createElement('div');
+        textWrapper.innerHTML = parseContent(text);
+        content.appendChild(textWrapper);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(content);
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      if (!isLoading) {
+        renderMathAndCode(content);
+      }
+
+      return content;
+    }
+
+    function openResetModal() {
+      showAlert("대화 초기화", "지금까지의 대화와 학습 기록을 초기화하시겠습니까?", function() {
+        chatHistory = [];
+        rawChatLogs = [];
+        questionCount = 0;
+        currentScore = 0;
+        localStorage.removeItem('btm_chat_history');
+        localStorage.removeItem('btm_raw_logs');
+        localStorage.removeItem('btm_q_count');
+        localStorage.removeItem('btm_score');
+
+        document.getElementById('qCountDisplay').innerText = '0';
+        document.getElementById('scoreDisplay').innerText = '0';
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = `
+          <div class="msg-row bot-row">
+            <div class="avatar">👨‍🏫</div>
+            <div class="msg-content">
+              <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+              <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요. 사진(📷) 첨부 질문도 환영합니다.</p>
+            </div>
+          </div>`;
+      });
+    }
+
+    function openReportModal() {
+      const studentInput = document.getElementById('studentId');
+      const studentName = studentInput.value.trim() || "미등록 학생";
+
+      participationRate = Math.min(questionCount * 20, 100);
+      sincerityRate = questionCount > 0 ? Math.min(Math.round((currentScore / (questionCount * 20)) * 100), 100) : 0;
+      understandingRate = questionCount > 0 ? Math.min(Math.round((participationRate * 0.4) + (sincerityRate * 0.6)), 100) : 0;
+
+      document.getElementById('modalStudentName').innerText = studentName;
+      document.getElementById('modalQCount').innerText = `${questionCount} 회`;
+      document.getElementById('modalTotalScore').innerText = `${currentScore} 점`;
+
+      document.getElementById('modalParticipationVal').innerText = `${participationRate}%`;
+      document.getElementById('modalParticipationBar').style.width = `${participationRate}%`;
+
+      document.getElementById('modalSincerityVal').innerText = `${sincerityRate}%`;
+      document.getElementById('modalSincerityBar').style.width = `${sincerityRate}%`;
+
+      document.getElementById('modalUnderstandingVal').innerText = `${understandingRate}%`;
+      document.getElementById('modalUnderstandingBar').style.width = `${understandingRate}%`;
+
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function exportToNotionMarkdown() {
+      const studentName = document.getElementById('studentId').value.trim() || "학생";
+      if (rawChatLogs.length === 0) {
+        showAlert("알림", "저장할 대화 내역이 없습니다.");
+        return;
+      }
+
+      let md = `# ⚛️ BTMPHYSICS AI TUTOR 학습 활동 보고서\n\n`;
+      md += `> **학생 식별:** ${studentName}\n`;
+      md += `> **학습 일시:** ${new Date().toLocaleString()}\n`;
+      md += `> **종합 학습 점수:** ${currentScore} / 100 점\n\n`;
+
+      md += `## 📊 학습 성취도 지표\n\n`;
+      md += `| 항목 | 수치 | 평가 수준 |\n`;
+      md += `| :--- | :--- | :--- |\n`;
+      md += `| **총 질문 수** | ${questionCount}회 | ${questionCount >= 5 ? '매우 우수' : '보통'} |\n`;
+      md += `| **학습 참여도** | ${participationRate}% | ${participationRate >= 80 ? '적극적 참여' : '기본 참여'} |\n`;
+      md += `| **학습 성실도** | ${sincerityRate}% | ${sincerityRate >= 80 ? '심화 질문 중심' : '일반 질문'} |\n`;
+      md += `| **개념 이해도** | ${understandingRate}% | ${understandingRate >= 80 ? '개념 습득 우수' : '학습 진행 중'} |\n\n`;
+
+      md += `## 💬 상세 질의응답 내역\n\n`;
+
+      rawChatLogs.forEach((item, idx) => {
+        if (item.sender === 'user') {
+          md += `### 🧑‍🎓 질문 ${Math.floor(idx / 2) + 1}\n\n`;
+          if (item.img) md += `*(사진 첨부 질문)*\n\n`;
+          md += `${item.text}\n\n`;
+        } else {
+          md += `### 👨‍🏫 볼츠만물리 AI 튜터 답변\n\n`;
+          md += `${item.text}\n\n`;
+        }
+      });
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `물리학습기록_${studentName}_${new Date().toISOString().slice(0,10)}.md`;
+      link.click();
+      closeReportModal();
+    }
+
+    async function handleSend() {
+      const qInput = document.getElementById('questionInput');
+      const studentInput = document.getElementById('studentId');
+      const sendBtn = document.getElementById('sendBtn');
+
+      const studentName = studentInput.value.trim();
+
+      if (!studentName) {
+        showAlert("학습 시작 안내", "질문을 시작하기 전에 상단에 [학번과 이름]을 먼저 입력해 주세요.");
+        studentInput.classList.add('input-alert');
+        studentInput.focus();
+        return;
+      }
+
+      const question = qInput.value.trim();
+      if (!question && !selectedImageBase64) return;
+
+      const currentImgBase64 = selectedImageBase64;
+      const currentImgMime = selectedImageMime;
+      const displayImgSrc = currentImgBase64 ? `data:${currentImgMime};base64,${currentImgBase64}` : null;
+
+      const userParts = [];
+      if (currentImgBase64) {
+        userParts.push({
+          inlineData: {
+            mimeType: currentImgMime,
+            data: currentImgBase64
+          }
+        });
+      }
+      userParts.push({ text: question || "이 이미지의 물리 문제를 분석하고 풀이해 주세요." });
+
+      saveStudentId();
+      appendMessageUI('user', question || "(이미지 질문)", false, displayImgSrc);
+      rawChatLogs.push({ sender: 'user', text: question || "(이미지 질문)", img: displayImgSrc });
+
+      qInput.value = '';
+      clearSelectedImage();
+      sendBtn.disabled = true;
+
+      const loadingElement = appendMessageUI('bot', '', true);
+
+      chatHistory.push({ role: "user", parts: userParts });
+      questionCount++;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION + lectureKnowledgeBase }] },
+            contents: chatHistory
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          loadingElement.innerText = "API 오류: " + data.error.message;
+          return;
+        }
+
+        const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
+        loadingElement.innerHTML = parseContent(botReply);
+        renderMathAndCode(loadingElement);
+
+        chatHistory.push({ role: "model", parts: [{ text: botReply }] });
+        rawChatLogs.push({ sender: 'bot', text: botReply });
+
+        const lenScore = Math.min((question.length + (currentImgBase64 ? 20 : 0)) * 2, 40);
+        const countScore = Math.min(questionCount * 15, 60);
+        currentScore = Math.min(lenScore + countScore, 100);
+
+        document.getElementById('qCountDisplay').innerText = questionCount;
+        document.getElementById('scoreDisplay').innerText = currentScore;
+
+        saveLocalHistory();
+        logToGoogleSheet(studentName, question || "(이미지 질문)", botReply, currentScore);
+      } catch (err) {
+        loadingElement.innerText = "통신 오류: " + err.message;
+      } finally {
+        sendBtn.disabled = false;
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+      }
+    }
+
+    function logToGoogleSheet(studentId, question, answer, score) {
+      const now = new Date();
+      const timeString = now.getFullYear() + "-" + 
+                         String(now.getMonth() + 1).padStart(2, '0') + "-" + 
+                         String(now.getDate()).padStart(2, '0') + " " + 
+                         String(now.getHours()).padStart(2, '0') + ":" + 
+                         String(now.getMinutes()).padStart(2, '0') + ":" + 
+                         String(now.getSeconds()).padStart(2, '0');
+
+      const payload = {
+        일시: timeString,
+        학번이름: studentId,
+        질문내용: question,
+        AI답변요약: answer.substring(0, 150),
+        참여도: `${Math.min(questionCount * 20, 100)}%`,
+        성실도: "100%",
+        점수: score
+      };
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    document.getElementById('questionInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  </script>
+</body>
+</html>
