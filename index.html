@@ -12,6 +12,11 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3254/3254099.png">
 
+  <!-- KaTeX 물리 수식 렌더링 라이브러리 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -35,6 +40,15 @@
       font-size: 17px;
       font-weight: 700;
       color: #58a6ff;
+    }
+    .header-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
     }
     .student-bar {
       background-color: #1f242c;
@@ -63,11 +77,12 @@
     }
     .msg {
       max-width: 85%;
-      padding: 10px 14px;
+      padding: 12px 16px;
       border-radius: 12px;
       font-size: 14.5px;
-      line-height: 1.5;
+      line-height: 1.6;
       white-space: pre-wrap;
+      word-break: break-word;
     }
     .user {
       align-self: flex-end;
@@ -81,6 +96,11 @@
       color: #e6edf3;
       border: 1px solid #30363d;
       border-bottom-left-radius: 2px;
+    }
+    .loading-dots {
+      display: inline-block;
+      font-style: italic;
+      color: #8b949e;
     }
     .input-area {
       background-color: #161b22;
@@ -97,14 +117,18 @@
       padding: 10px;
       border-radius: 8px;
       resize: none;
-      height: 44px;
+      height: 46px;
       font-size: 14px;
+      outline: none;
+    }
+    .input-area textarea:focus {
+      border-color: #58a6ff;
     }
     .input-area button {
       background-color: #238636;
       color: #fff;
       border: none;
-      padding: 0 16px;
+      padding: 0 18px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
@@ -119,12 +143,12 @@
 
   <header>
     <h1>⚛️ BTMPHYSICSAITUTOR</h1>
-    <span style="font-size: 12px; color: #8b949e;">볼츠만물리 학원</span>
+    <button class="header-btn" onclick="resetChat()">대화 초기화</button>
   </header>
 
   <div class="student-bar">
     <label style="font-size: 13px; color: #8b949e; white-space: nowrap;">학생 식별</label>
-    <input type="text" id="studentId" placeholder="예: 20101 홍길동">
+    <input type="text" id="studentId" placeholder="예: 20101 홍길동 (학번과 이름)" onchange="saveStudentId()">
   </div>
 
   <div id="chat-box">
@@ -148,14 +172,14 @@
 당신은 '볼츠만물리' 학원의 공식 물리 학습 전용 AI 튜터인 'btmphysics AI Tutor'입니다.
 
 [핵심 제한 규칙: 물리 외 질문 원천 차단]
-1. 당신의 유일한 역할은 '물리학(Physics) 학습'과 '볼츠만물리 학원 관련 안내'입니다.
-2. 물리학과 직접 관련이 없는 질문(타 과목, 일상 대화, 게임, 연예인, 프로그래밍 코딩 요청, 잡담 등)에는 내용을 직접 답변하지 마세요.
+1. 당신의 유일한 역할은 물리학(Physics) 학습과 볼츠만물리 학원 관련 안내입니다.
+2. 물리학과 직접 관련이 없는 질문(타 과목 질문, 일상 대화, 게임, 연예인, 프로그래밍 코딩 요청, 잡담 등)에는 내용을 직접 답변하지 마세요.
 3. 물리 외의 질문이 들어왔을 때는 단호하고 정중하게 아래와 같이 답변을 거절하고 물리 질문을 유도하세요:
    - "저는 볼츠만물리 학원의 물리 전용 AI 튜터입니다. 물리학 학습 및 개념과 관련된 질문만 답변할 수 있습니다. 궁금한 물리 질문을 남겨주세요."
 
 [신원 및 명칭 규칙]
 1. '볼츠만 쌤' 또는 '볼츠만 선생님':
-   - 19세기 물리학자 루트비히 볼츠만이 아니라, '볼츠만물리' 학원의 원장 선생님을 의미합니다.
+   - 19세기 물리학자 루트비히 볼츠만이 아니라, 볼츠만물리 학원의 원장 선생님을 의미합니다.
    - 학생이 "볼츠만 쌤이 누구야?"라고 물으면 "볼츠만물리 학원에서 여러분의 물리를 열정적으로 지도해 주시는 원장 선생님"으로 안내하세요.
 2. 'btmphysics' 및 'btmphysics AI Tutor':
    - 볼츠만물리 학원(인터넷 활동명 btmphysics)에서 학생들의 물리 질의응답을 돕기 위해 운영하는 전용 AI 학습 도우미입니다.
@@ -168,6 +192,31 @@
 `;
 
     let chatHistory = [];
+    let questionCount = 0;
+
+    window.onload = function() {
+      const savedId = localStorage.getItem('btm_student_id');
+      if (savedId) {
+        document.getElementById('studentId').value = savedId;
+      }
+    };
+
+    function saveStudentId() {
+      const id = document.getElementById('studentId').value.trim();
+      localStorage.setItem('btm_student_id', id);
+    }
+
+    function renderMath() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.getElementById('chat-box'), {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
 
     function appendMessage(sender, text) {
       const chatBox = document.getElementById('chat-box');
@@ -176,6 +225,16 @@
       div.innerText = text;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
+      renderMath();
+      return div;
+    }
+
+    function resetChat() {
+      if (confirm("대화 기록을 초기화하시겠습니까?")) {
+        chatHistory = [];
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = '<div class="msg bot">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 질문이나 개념을 남겨주시면 명쾌하게 답변해 드립니다.</div>';
+      }
     }
 
     async function handleSend() {
@@ -188,11 +247,15 @@
 
       if (!question) return;
 
+      saveStudentId();
       appendMessage('user', question);
       qInput.value = '';
       sendBtn.disabled = true;
 
+      const loadingMsg = appendMessage('bot', '답변을 생성하고 있습니다...');
+
       chatHistory.push({ role: "user", parts: [{ text: question }] });
+      questionCount++;
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -206,20 +269,33 @@
         });
 
         const data = await response.json();
-        const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
 
-        appendMessage('bot', botReply);
+        if (data.error) {
+          loadingMsg.innerText = "API 오류: " + data.error.message;
+          return;
+        }
+
+        const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
+        loadingMsg.innerText = botReply;
+        renderMath();
+
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
 
-        logToGoogleSheet(studentName, question, botReply);
+        // 점수 산출 로직
+        const lenScore = Math.min(question.length * 2, 40);
+        const countScore = Math.min(questionCount * 15, 60);
+        const totalScore = Math.min(lenScore + countScore, 100);
+
+        logToGoogleSheet(studentName, question, botReply, totalScore);
       } catch (err) {
-        appendMessage('bot', "오류가 발생했습니다: " + err.message);
+        loadingMsg.innerText = "통신 오류: " + err.message;
       } finally {
         sendBtn.disabled = false;
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
       }
     }
 
-    function logToGoogleSheet(studentId, question, answer) {
+    function logToGoogleSheet(studentId, question, answer, score) {
       const now = new Date();
       const timeString = now.getFullYear() + "-" + 
                          String(now.getMonth() + 1).padStart(2, '0') + "-" + 
@@ -235,7 +311,7 @@
         AI답변요약: answer.substring(0, 150),
         참여도: "100%",
         성실도: "100%",
-        점수: 95
+        점수: score
       };
 
       fetch(WEBHOOK_URL, {
