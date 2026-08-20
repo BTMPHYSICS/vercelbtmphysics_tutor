@@ -12,16 +12,13 @@
   <meta name="application-name" content="BTMPHYSICS-AI-TUTOR">
   <link rel="manifest" href="manifest.json?v=3">
 
-  <!-- 네온 아톰 물리 전용 아이콘 -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
 
-  <!-- KaTeX 수식 렌더링 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
@@ -554,7 +551,6 @@
     </div>
   </div>
 
-  <!-- 이미지 첨부 시 미리보기 영역 -->
   <div class="image-preview-bar" id="imagePreviewBar">
     <img id="previewImg" class="preview-thumbnail" src="" alt="미리보기">
     <span class="preview-info" id="previewFileName">선택된 이미지</span>
@@ -568,7 +564,6 @@
     <button id="sendBtn" onclick="handleSend()">전송</button>
   </div>
 
-  <!-- 커스텀 알림 모달 -->
   <div class="modal-overlay" id="customAlertModal">
     <div class="modal-box" style="max-width: 380px;">
       <div class="modal-header">
@@ -584,7 +579,6 @@
     </div>
   </div>
 
-  <!-- 학습기록 팝업 모달 -->
   <div class="modal-overlay" id="reportModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -725,7 +719,6 @@
       }
     }
     window.addEventListener('load', renderMathUI);
-    // 물리 수식 기반 Canvas 2D 애니메이션 코드
   <\/script>
 </body>
 </html>
@@ -767,13 +760,14 @@
 
         for (const filePath of fileList) {
           try {
-            const res = await fetch(filePath);
+            const cleanPath = filePath.startsWith('/') ? filePath : '/' + filePath;
+            const res = await fetch(cleanPath);
             if (res.ok) {
               const mdText = await res.text();
-              combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
+              combinedText += `\n--- 강의 파일: ${cleanPath} ---\n${mdText}\n`;
               loadedCount++;
             } else {
-              console.warn(`[볼츠만물리] 강의 파일 로드 실패: ${filePath} (상태: ${res.status})`);
+              console.warn(`[볼츠만물리] 강의 파일 로드 실패: ${cleanPath} (상태: ${res.status})`);
             }
           } catch (fileErr) {
             console.error(`[볼츠만물리] 파일 읽기 에러 (${filePath}):`, fileErr);
@@ -1190,6 +1184,24 @@
       closeReportModal();
     }
 
+    function formatUserFriendlyErrorMessage(errMsg) {
+      const msg = String(errMsg || "");
+      if (
+        msg.includes("high demand") || 
+        msg.includes("503") || 
+        msg.includes("429") || 
+        msg.includes("Resource has been exhausted") ||
+        msg.includes("quota") ||
+        msg.includes("Overloaded")
+      ) {
+        return "현재 AI 튜터 이용자가 많아 일시적으로 응답이 지연되고 있습니다. 잠시 후 다시 질문해 주세요.";
+      }
+      if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+        return "인터넷 연결이 불안정합니다. 네트워크 상태를 확인한 후 다시 시도해 주세요.";
+      }
+      return "답변을 불러오는 중 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+    }
+
     async function handleSend() {
       const qInput = document.getElementById('questionInput');
       const studentInput = document.getElementById('studentId');
@@ -1251,7 +1263,8 @@
         const data = await response.json();
 
         if (data.error) {
-          botContent.innerText = "API 오류: " + data.error.message;
+          const friendlyMessage = formatUserFriendlyErrorMessage(data.error.message);
+          botContent.innerText = friendlyMessage;
           return;
         }
 
@@ -1282,7 +1295,8 @@
         saveLocalHistory();
         logToGoogleSheet(studentName, question || "(이미지 질문)", botReply, currentScore);
       } catch (err) {
-        botContent.innerText = "통신 오류: " + err.message;
+        const friendlyMessage = formatUserFriendlyErrorMessage(err.message);
+        botContent.innerText = friendlyMessage;
       } finally {
         sendBtn.disabled = false;
         document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
