@@ -31,6 +31,7 @@
       flex-direction: column;
       height: 100vh;
       overflow: hidden;
+      -webkit-font-smoothing: antialiased;
     }
     header {
       background-color: #161b22;
@@ -138,8 +139,10 @@
       padding: 12px 16px;
       padding-top: 14px;
       border-radius: 12px;
-      line-height: 1.65;
-      word-break: break-word;
+      line-height: 1.75;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+      letter-spacing: -0.2px;
     }
     .user-row .msg-content {
       background-color: #1f6feb;
@@ -160,7 +163,7 @@
       position: absolute;
       top: 6px;
       right: 6px;
-      background: rgba(13, 17, 23, 0.6);
+      background: rgba(13, 17, 23, 0.7);
       border: 1px solid #30363d;
       color: #8b949e;
       border-radius: 4px;
@@ -171,7 +174,7 @@
       align-items: center;
       gap: 3px;
       transition: all 0.2s ease;
-      opacity: 0.7;
+      opacity: 0.75;
     }
     .msg-wrapper:hover .copy-btn {
       opacity: 1;
@@ -186,37 +189,42 @@
       font-size: 18px !important;
       font-weight: 700;
       color: #58a6ff;
-      margin: 12px 0 6px 0;
-      line-height: 1.4;
+      margin: 14px 0 6px 0;
+      line-height: 1.45;
       display: block;
+      word-break: keep-all;
     }
     .bot-row .msg-content h2 {
       font-size: 16.5px !important;
       font-weight: 700;
       color: #79c0ff;
-      margin: 10px 0 5px 0;
-      line-height: 1.4;
+      margin: 12px 0 6px 0;
+      line-height: 1.45;
       display: block;
+      word-break: keep-all;
     }
     .bot-row .msg-content h3 {
       font-size: 15px !important;
       font-weight: 600;
       color: #d2a8ff;
-      margin: 8px 0 4px 0;
-      line-height: 1.4;
+      margin: 10px 0 4px 0;
+      line-height: 1.45;
       display: block;
+      word-break: keep-all;
     }
     .bot-row .msg-content p {
       font-size: 13.5px !important;
-      line-height: 1.7;
-      margin: 4px 0 8px 0;
+      line-height: 1.75;
+      margin: 5px 0 8px 0;
       color: #e6edf3;
+      word-break: keep-all;
     }
     .bot-row .msg-content ul, .bot-row .msg-content ol {
-      margin: 4px 0 8px 20px;
+      margin: 5px 0 9px 20px;
       font-size: 13px !important;
-      line-height: 1.65;
+      line-height: 1.7;
       color: #c9d1d9;
+      word-break: keep-all;
     }
     .bot-row .msg-content li {
       margin-bottom: 4px;
@@ -228,7 +236,10 @@
 
     .katex-display {
       margin: 10px 0 !important;
-      font-size: 1.08em;
+      font-size: 1.06em;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 4px 0;
     }
 
     pre {
@@ -244,6 +255,7 @@
       font-size: 12.5px;
     }
 
+    /* 시뮬레이터 외부 컨테이너 */
     .sim-container {
       width: 100%;
       background: #0d1117;
@@ -258,7 +270,7 @@
     }
     .sim-frame {
       width: 100%;
-      height: 420px;
+      height: 410px;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -652,15 +664,48 @@
    - 답변의 맨 마지막 부분에, 학생이 방금 배운 개념을 제대로 체화했는지 점검하거나 연계된 물리 상황을 상상해볼 수 있는 '핵심 추가 질문 1~2가지'를 정중하게 건네주세요. (예: "만약 이 상황에서 저항이 병렬로 하나 더 연결된다면 전체 전류는 어떻게 바뀔까요?")
 3. 스타일 및 문장 규칙:
    - 전문적인 물리 용어를 정확하게 사용하되, 직관적인 비유와 예시를 들어 명쾌하게 설명합니다.
-   - 문장에 강조용 별표(**)와 같은 불필요한 특수 기호나 이모티콘은 사용하지 않고 단정하고 깔끔한 문장으로 작성합니다.
+   - 한국어 어법에 맞게 문장 띄어쓰기를 명확히 지키고 단정한 문장으로 작성합니다.
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시뮬레이션 요청 시]
+[시뮬레이션 요청 시: 컨트롤바 밀착 및 내부 수식 렌더링 규칙]
 - 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-- 화면 크기 맞춤 규칙: 
-  1) body 스타일에 margin:0; padding:4px; overflow:hidden; width:100vw; height:100vh; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:space-between; 를 적용하세요.
-  2) canvas는 width="320" height="200" 스타일에 max-width:100%; max-height:calc(100vh - 45px); object-fit:contain; 을 주어 스크롤바가 전혀 생기지 않고 화면에 꽉 차게 렌더링되도록 작성하세요.
+- 시뮬레이터 HTML 내부에는 반드시 KaTeX 라이브러리를 포함하고, 컨트롤바는 캔버스 바로 아래에 긴밀하게 붙여 배치하세요:
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #161b22; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; padding: 6px; }
+  .canvas-box { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  canvas { width: 100%; height: auto; aspect-ratio: 16/10; max-height: 270px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
+  .controls { width: 100%; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #c9d1d9; }
+  button { background: #238636; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; }
+  .readout { background: #21262d; border: 1px solid #30363d; padding: 3px 8px; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <div class="canvas-box">
+    <canvas id="simCanvas" width="480" height="300"></canvas>
+    <div class="controls">
+      <button onclick="resetSim()">다시 시작</button>
+      <span class="readout" id="dataDisplay">$v = 0\\text{ m/s}$, $t = 0\\text{ s}$</span>
+    </div>
+  </div>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.renderMathInElement) renderMathInElement(document.body);
+    });
+    // 물리 수식 기반 Canvas 2D 애니메이션 코드
+  <\/script>
+</body>
+</html>
+\`\`\`
 `;
 
     let lectureKnowledgeBase = "";
@@ -1052,24 +1097,24 @@
       }
 
       let md = `# ⚛️ BTMPHYSICS AI TUTOR 학습 활동 보고서\n\n`;
-      md += `> **학생 식별:** ${studentName}\n`;
-      md += `> **학습 일시:** ${new Date().toLocaleString()}\n`;
-      md += `> **종합 학습 점수:** ${currentScore} / 100 점\n\n`;
+      md += `> 학생 식별: ${studentName}\n`;
+      md += `> 학습 일시: ${new Date().toLocaleString()}\n`;
+      md += `> 종합 학습 점수: ${currentScore} / 100 점\n\n`;
 
       md += `## 📊 학습 성취도 지표\n\n`;
       md += `| 항목 | 수치 | 평가 수준 |\n`;
       md += `| :--- | :--- | :--- |\n`;
-      md += `| **총 질문 수** | ${questionCount}회 | ${questionCount >= 5 ? '매우 우수' : '보통'} |\n`;
-      md += `| **학습 참여도** | ${participationRate}% | ${participationRate >= 80 ? '적극적 참여' : '기본 참여'} |\n`;
-      md += `| **학습 성실도** | ${sincerityRate}% | ${sincerityRate >= 80 ? '심화 질문 중심' : '일반 질문'} |\n`;
-      md += `| **개념 이해도** | ${understandingRate}% | ${understandingRate >= 80 ? '개념 습득 우수' : '학습 진행 중'} |\n\n`;
+      md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 5 ? '매우 우수' : '보통'} |\n`;
+      md += `| 학습 참여도 | ${participationRate}% | ${participationRate >= 80 ? '적극적 참여' : '기본 참여'} |\n`;
+      md += `| 학습 성실도 | ${sincerityRate}% | ${sincerityRate >= 80 ? '심화 질문 중심' : '일반 질문'} |\n`;
+      md += `| 개념 이해도 | ${understandingRate}% | ${understandingRate >= 80 ? '개념 습득 우수' : '학습 진행 중'} |\n\n`;
 
       md += `## 💬 상세 질의응답 내역\n\n`;
 
       rawChatLogs.forEach((item, idx) => {
         if (item.sender === 'user') {
           md += `### 🧑‍🎓 질문 ${Math.floor(idx / 2) + 1}\n\n`;
-          if (item.img) md += `*(사진 첨부 질문)*\n\n`;
+          if (item.img) md += `(사진 첨부 질문)\n\n`;
           md += `${item.text}\n\n`;
         } else {
           md += `### 👨‍🏫 볼츠만물리 AI 튜터 답변\n\n`;
