@@ -12,17 +12,19 @@
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3254/3254099.png">
 
+  <!-- KaTeX 수식 렌더링 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
+  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
       background-color: #0e1117;
       color: #fafafa;
       display: flex;
@@ -114,6 +116,7 @@
     }
     .msg-row.bot-row {
       align-self: flex-start;
+      width: 100%;
     }
     .avatar {
       width: 34px;
@@ -128,73 +131,74 @@
       border: 1px solid #30363d;
     }
     .msg-content {
-      padding: 12px 15px;
+      padding: 12px 16px;
       border-radius: 12px;
-      font-size: 14px;
       line-height: 1.65;
       word-break: break-word;
-      width: 100%;
+      max-width: calc(100% - 45px);
     }
     .user-row .msg-content {
       background-color: #1f6feb;
       color: #fff;
       border-bottom-right-radius: 2px;
-      font-size: 14.5px;
+      font-size: 14px;
     }
     .bot-row .msg-content {
       background-color: #21262d;
       color: #e6edf3;
       border: 1px solid #30363d;
       border-bottom-left-radius: 2px;
-    }
-    .chat-img-preview {
-      max-width: 220px;
-      max-height: 220px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      display: block;
-      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 13.5px;
     }
 
-    /* 텍스트 크기 계층화 디자인 */
+    /* 텍스트 크기 계층화 디자인 (제목 크게, 설명 적당히 작게) */
     .bot-row .msg-content h1 {
-      font-size: 18.5px;
+      font-size: 18px !important;
       font-weight: 700;
       color: #58a6ff;
       margin: 12px 0 6px 0;
       line-height: 1.4;
+      display: block;
     }
     .bot-row .msg-content h2 {
-      font-size: 16.5px;
+      font-size: 16.5px !important;
       font-weight: 700;
       color: #79c0ff;
       margin: 10px 0 5px 0;
       line-height: 1.4;
+      display: block;
     }
     .bot-row .msg-content h3 {
-      font-size: 15px;
+      font-size: 15px !important;
       font-weight: 600;
       color: #d2a8ff;
       margin: 8px 0 4px 0;
       line-height: 1.4;
+      display: block;
     }
     .bot-row .msg-content p {
-      font-size: 13.5px;
+      font-size: 13.5px !important;
       line-height: 1.7;
-      margin-bottom: 6px;
+      margin: 4px 0 8px 0;
       color: #e6edf3;
     }
     .bot-row .msg-content ul, .bot-row .msg-content ol {
-      margin: 4px 0 6px 18px;
-      font-size: 13px;
+      margin: 4px 0 8px 20px;
+      font-size: 13.5px !important;
       line-height: 1.65;
+      color: #e6edf3;
     }
     .bot-row .msg-content li {
-      margin-bottom: 3px;
+      margin-bottom: 4px;
+    }
+    .bot-row .msg-content strong {
+      font-weight: 600;
+      color: #79c0ff;
     }
 
     .katex-display {
-      margin: 8px 0 !important;
+      margin: 10px 0 !important;
+      font-size: 1.08em;
     }
 
     pre {
@@ -289,6 +293,15 @@
       font-size: 16px;
       cursor: pointer;
       padding: 0 4px;
+    }
+
+    .chat-img-preview {
+      max-width: 220px;
+      max-height: 220px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: block;
+      border: 1px solid rgba(255,255,255,0.2);
     }
 
     .input-area {
@@ -481,6 +494,7 @@
     </div>
   </div>
 
+  <!-- 이미지 첨부 시 미리보기 영역 -->
   <div class="image-preview-bar" id="imagePreviewBar">
     <img id="previewImg" class="preview-thumbnail" src="" alt="미리보기">
     <span class="preview-info" id="previewFileName">선택된 이미지</span>
@@ -494,6 +508,7 @@
     <button id="sendBtn" onclick="handleSend()">전송</button>
   </div>
 
+  <!-- 커스텀 알림 모달 -->
   <div class="modal-overlay" id="customAlertModal">
     <div class="modal-box" style="max-width: 380px;">
       <div class="modal-header">
@@ -509,6 +524,7 @@
     </div>
   </div>
 
+  <!-- 학습기록 팝업 모달 -->
   <div class="modal-overlay" id="reportModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -596,6 +612,7 @@
 [답변 작성 및 지도 방식]
 1. 완결성 있는 충실한 1차 답변 제공:
    - 학생의 첫 질문(또는 사진 속 문제/도표)에 대해 질문의 핵심 원리, 공식 유도, 물리적 직관을 빠짐없이 충실하고 명쾌하게 설명하세요.
+   - 대분류 주제는 ## 제목 형식으로, 소분류나 소주제는 ### 제목 형식으로 작성하세요.
    - 이미지가 첨부된 경우, 이미지 안의 조건과 물리량(질량, 거리, 저항값, 그래프 축 등)을 먼저 파악하고 이를 기반으로 단계별 풀이를 제공하세요.
    - 강의록(레퍼런스 데이터)에 수록된 핵심 판서 및 풀이 순서를 최대한 존중하여 체계적으로 서술합니다.
 2. 심화 탐구 및 사고 확장을 위한 후속 질문(추가 발문) 제시:
@@ -720,7 +737,6 @@
       document.getElementById('customAlertModal').style.display = 'none';
     }
 
-    /* 이미지 선택 및 미리보기 처리 */
     function handleImageSelect(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -789,21 +805,92 @@
       return finalHtml;
     }
 
+    // 마크다운 문단 및 태그 변환기 (글자 크기 및 계층 구조 보장)
     function formatMarkdownText(text) {
-      let parsed = text;
+      if (!text) return '';
 
-      parsed = parsed.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
-        return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+      // 코드 블록 먼저 보호 및 치환
+      const codeBlocks = [];
+      let str = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        const id = `__CODEBLOCK_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`);
+        return id;
       });
 
-      parsed = parsed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-      parsed = parsed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-      parsed = parsed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+      // 줄 단위 분리 파싱
+      const lines = str.split(/\r?\n/);
+      let htmlResult = '';
+      let inList = false;
+      let listType = '';
 
-      parsed = parsed.replace(/\n\n/g, '<br><br>');
-      parsed = parsed.replace(/\n/g, '<br>');
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
 
-      return parsed;
+        if (!line) {
+          if (inList) {
+            htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+            inList = false;
+          }
+          continue;
+        }
+
+        // 코드 블록 복원
+        if (line.startsWith('__CODEBLOCK_')) {
+          if (inList) {
+            htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+            inList = false;
+          }
+          const idx = parseInt(line.replace(/[^0-9]/g, ''));
+          htmlResult += codeBlocks[idx] || '';
+          continue;
+        }
+
+        // 제목 태그 계층 변환
+        if (/^###\s+/.test(line)) {
+          if (inList) { htmlResult += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+          htmlResult += `<h3>${line.replace(/^###\s+/, '')}</h3>`;
+        } else if (/^##\s+/.test(line)) {
+          if (inList) { htmlResult += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+          htmlResult += `<h2>${line.replace(/^##\s+/, '')}</h2>`;
+        } else if (/^#\s+/.test(line)) {
+          if (inList) { htmlResult += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
+          htmlResult += `<h1>${line.replace(/^#\s+/, '')}</h1>`;
+        } 
+        // 불릿 목록 변환
+        else if (/^[-*]\s+/.test(line)) {
+          if (!inList || listType !== 'ul') {
+            if (inList) htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+            htmlResult += '<ul>';
+            inList = true;
+            listType = 'ul';
+          }
+          htmlResult += `<li>${line.replace(/^[-*]\s+/, '')}</li>`;
+        }
+        // 번호 목록 변환
+        else if (/^\d+\.\s+/.test(line)) {
+          if (!inList || listType !== 'ol') {
+            if (inList) htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+            htmlResult += '<ol>';
+            inList = true;
+            listType = 'ol';
+          }
+          htmlResult += `<li>${line.replace(/^\d+\.\s+/, '')}</li>`;
+        }
+        // 일반 본문 문단 (<p> 감싸기)
+        else {
+          if (inList) {
+            htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+            inList = false;
+          }
+          htmlResult += `<p>${line}</p>`;
+        }
+      }
+
+      if (inList) {
+        htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
+      }
+
+      return htmlResult;
     }
 
     function appendMessageUI(sender, text, isLoading = false, imgSrc = null) {
