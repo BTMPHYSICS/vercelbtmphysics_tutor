@@ -159,7 +159,6 @@
       font-size: 13.5px;
     }
 
-    /* 복사 버튼 스타일 */
     .copy-btn {
       position: absolute;
       top: 6px;
@@ -185,7 +184,6 @@
       color: #58a6ff;
     }
 
-    /* 텍스트 크기 및 글자색 차등화 디자인 */
     .bot-row .msg-content h1 {
       font-size: 18px !important;
       font-weight: 700;
@@ -234,7 +232,6 @@
       margin-bottom: 4px;
     }
     
-    /* 별표 제거 후 부드러운 세미 볼드 텍스트 적용 */
     .bot-row .msg-content strong, .bot-row .msg-content b {
       font-weight: 600;
       color: #a5d6ff;
@@ -356,7 +353,7 @@
       background-color: #161b22;
       padding: 10px 14px;
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 8px;
       border-top: 1px solid #30363d;
     }
@@ -378,7 +375,6 @@
       background-color: #30363d;
     }
     
-    /* 띄어쓰기 및 자간 좁힘 최적화 */
     .input-area textarea {
       flex: 1;
       background-color: #0d1117;
@@ -387,7 +383,8 @@
       padding: 10px 12px;
       border-radius: 8px;
       resize: none;
-      height: 44px;
+      min-height: 44px;
+      max-height: 120px;
       font-size: 13.5px;
       outline: none;
       font-family: inherit;
@@ -408,13 +405,13 @@
       font-weight: 600;
       cursor: pointer;
       letter-spacing: -0.2px;
+      flex-shrink: 0;
     }
     .input-area button:disabled {
       background-color: #30363d;
       cursor: not-allowed;
     }
 
-    /* 모달 팝업 스타일 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -921,7 +918,6 @@
     function formatMarkdownText(text) {
       if (!text) return '';
 
-      // 코드 블록 먼저 보호 및 치환
       const codeBlocks = [];
       let str = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
         const id = `__CODEBLOCK_${codeBlocks.length}__`;
@@ -929,7 +925,6 @@
         return id;
       });
 
-      // **문구** 강조를 <strong>문구</strong> 태그로 변환하여 별표는 제거하고 볼드체 적용
       str = str.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
       const lines = str.split(/\r?\n/);
@@ -1084,7 +1079,6 @@
       });
     }
 
-    /* 완만한 활동보고서 지표 산출 로직 */
     function openReportModal() {
       const studentInput = document.getElementById('studentId');
       const studentName = studentInput.value.trim() || "미등록 학생";
@@ -1094,15 +1088,10 @@
         sincerityRate = 0;
         understandingRate = 0;
       } else {
-        // 질문 8~10회 누적 시 100% 도달
         participationRate = Math.min(Math.round(questionCount * 12), 100);
-        
-        // 질문당 평균 글자 수 기반 성실도 평가 (질문당 평균 35자 이상 시 만점 기준)
         const avgLength = totalInputLength / questionCount;
         sincerityRate = Math.min(Math.round(avgLength * 2.8), 100);
-        sincerityRate = Math.max(sincerityRate, 25); // 기본 성실도 하한선
-
-        // 참여도와 성실도의 가중 평균 + 질문 횟수 보정으로 이해도 완만 산출
+        sincerityRate = Math.max(sincerityRate, 25);
         understandingRate = Math.min(Math.round((participationRate * 0.5) + (sincerityRate * 0.3) + (questionCount * 2)), 100);
       }
 
@@ -1204,6 +1193,7 @@
       rawChatLogs.push({ sender: 'user', text: question || "(이미지 질문)", img: displayImgSrc });
 
       qInput.value = '';
+      qInput.style.height = '44px';
       clearSelectedImage();
       sendBtn.disabled = true;
 
@@ -1248,7 +1238,6 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
-        // 질문당 점수를 완만하게 누적 (질문 1회당 약 7~9점씩 안정적 상승)
         const qScore = questionCount * 7;
         const lenBonus = Math.min(Math.round(totalInputLength * 0.2), 30);
         currentScore = Math.min(qScore + lenBonus, 100);
@@ -1293,10 +1282,29 @@
       }).catch(() => {});
     }
 
-    document.getElementById('questionInput').addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
+    // 모바일 터치 기기 감지 (모바일 환경에서는 엔터 시 줄바꿈 적용, PC 환경에서는 단독 엔터 시 전송)
+    const isMobileDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    const questionTextarea = document.getElementById('questionInput');
+
+    // 내용에 따라 입력창 높이 자동 조절
+    questionTextarea.addEventListener('input', function() {
+      this.style.height = '44px';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    questionTextarea.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        if (isMobileDevice) {
+          // 모바일: 줄바꿈 허용 (전송 방지)
+          return;
+        } else {
+          // PC: Shift+Enter는 줄바꿈, 단독 Enter는 전송
+          if (!e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }
       }
     });
   </script>
