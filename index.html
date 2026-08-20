@@ -681,50 +681,7 @@
 [시각 자료, 도해 및 시뮬레이션 규칙: 아스키(ASCII) 텍스트 그림 절대 금지]
 1. 회로도, 그래프, 자유물체도(힘의 분력도), 광선 추적도, 운동 궤적 등 모든 물리 도해를 설명할 때 문자 기호로 그린 아스키 아트(ASCII text art)는 절대 출력하지 마세요.
 2. 도해, 그래프, 물리 그림, 시뮬레이션을 요청받거나 시각적 설명이 필요할 때는 반드시 브라우저에서 선명하게 렌더링되는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-3. 시뮬레이터 및 그래픽 내부에서 수식 렌더링(KaTeX)과 컨트롤바 밀착 배치가 완벽히 동작하도록 아래 템플릿 구조를 따르세요:
-\`\`\`html
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #161b22; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; padding: 6px; }
-  .canvas-box { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  canvas { width: 100%; height: auto; aspect-ratio: 16/10; max-height: 270px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
-  .controls { width: 100%; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #c9d1d9; }
-  button { background: #238636; color: white; border: none; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 12px; }
-  .readout { background: #21262d; border: 1px solid #30363d; padding: 3px 8px; border-radius: 4px; }
-</style>
-</head>
-<body>
-  <div class="canvas-box">
-    <canvas id="simCanvas" width="480" height="300"></canvas>
-    <div class="controls">
-      <button onclick="resetSim()">다시 시작</button>
-      <span class="readout" id="dataDisplay">$v = 0\\text{ m/s}$, $t = 0\\text{ s}$</span>
-    </div>
-  </div>
-  <script>
-    function renderMathUI() {
-      if (window.renderMathInElement) {
-        renderMathInElement(document.body, {
-          delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false}
-          ],
-          throwOnError: false
-        });
-      }
-    }
-    window.addEventListener('load', renderMathUI);
-  <\/script>
-</body>
-</html>
-\`\`\`
+3. 시뮬레이터 내부의 물리량 수치(속도, 주기, 가속도, 힘 등)나 라벨 설명에 인라인 수식($...$)을 적극 활용하세요.
 `;
 
     let lectureKnowledgeBase = "";
@@ -916,6 +873,39 @@
       });
     }
 
+    function injectKaTeXToSimulation(rawCode) {
+      const katexHead = `
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
+<script>
+  function renderAllMath() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
+        throwOnError: false
+      });
+    }
+  }
+  window.addEventListener('load', () => {
+    renderAllMath();
+    setTimeout(renderAllMath, 200);
+    setTimeout(renderAllMath, 600);
+  });
+<\/script>
+`;
+      if (rawCode.includes('<head>')) {
+        return rawCode.replace('<head>', '<head>' + katexHead);
+      } else if (rawCode.includes('<html>')) {
+        return rawCode.replace('<html>', '<html><head>' + katexHead + '</head>');
+      } else {
+        return katexHead + rawCode;
+      }
+    }
+
     function parseContent(text) {
       let cleanText = text.replace(/^[ \t]*[-=]{3,}[ \t]*$/gm, '');
 
@@ -929,7 +919,8 @@
         finalHtml += formatMarkdownText(beforeText);
 
         const codeContent = match[1];
-        const blob = new Blob([codeContent], { type: 'text/html;charset=utf-8' });
+        const enhancedCode = injectKaTeXToSimulation(codeContent);
+        const blob = new Blob([enhancedCode], { type: 'text/html;charset=utf-8' });
         const blobUrl = URL.createObjectURL(blob);
 
         finalHtml += `
@@ -1109,21 +1100,26 @@
       });
     }
 
+    /* 100회 질문 기준 장기 완만 누적 지표 산출 계산기 */
     function calculateMetrics() {
       if (questionCount === 0) {
         return { part: 0, sinc: 0, und: 0, score: 0 };
       }
 
-      const part = Math.min(Math.round(questionCount * 4.5), 100);
+      // 1. 참여도: 질문 1회당 1%씩 정직하게 상승 (질문 100회 도달 시 100%)
+      const part = Math.min(questionCount, 100);
 
+      // 2. 성실도: 질문당 평균 글자 수(45자 기준)와 누적 질문 횟수(100회 기준)를 완만하게 결합
       const avgLen = totalInputLength / questionCount;
-      const lenFactor = Math.min(avgLen / 40, 1.0);
-      const countFactor = Math.min(questionCount / 18, 1.0);
-      const sinc = Math.min(Math.round(15 + (lenFactor * 50) + (countFactor * 35)), 100);
+      const lenFactor = Math.min(avgLen / 45, 1.0); // 0 ~ 1
+      const countFactor = Math.min(questionCount / 100, 1.0); // 0 ~ 1
+      const sinc = Math.min(Math.round(10 + (lenFactor * 40) + (countFactor * 50)), 100);
 
-      const und = Math.min(Math.round((part * 0.45) + (sinc * 0.35) + (Math.min(questionCount, 20) * 1.0)), 100);
+      // 3. 이해도: 100회 주기에 맞춘 완만한 대화 성숙도
+      const und = Math.min(Math.round((part * 0.5) + (sinc * 0.4) + (Math.min(questionCount, 100) * 0.1)), 100);
 
-      const score = Math.min(Math.round((part * 0.35) + (sinc * 0.35) + (und * 0.3)), 100);
+      // 4. 종합 점수: 100회 완주를 목표로 하는 종합 성취도
+      const score = Math.min(Math.round((part * 0.4) + (sinc * 0.3) + (und * 0.3)), 100);
 
       return { part, sinc, und, score };
     }
@@ -1175,10 +1171,10 @@
       md += `## 📊 학습 성취도 지표\n\n`;
       md += `| 항목 | 수치 | 평가 수준 |\n`;
       md += `| :--- | :--- | :--- |\n`;
-      md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 15 ? '매우 우수' : (questionCount >= 8 ? '우수' : '기초 학습 중')} |\n`;
-      md += `| 학습 참여도 | ${metrics.part}% | ${metrics.part >= 75 ? '적극적 참여' : (metrics.part >= 40 ? '보통 참여' : '초기 탐색')} |\n`;
-      md += `| 학습 성실도 | ${metrics.sinc}% | ${metrics.sinc >= 75 ? '심화 질문 중심' : '일반 질문'} |\n`;
-      md += `| 개념 이해도 | ${metrics.und}% | ${metrics.und >= 75 ? '개념 습득 우수' : '개념 정립 진행 중'} |\n\n`;
+      md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 80 ? '마스터 단계' : (questionCount >= 40 ? '심화 학습 중' : '기초 탐색 중')} |\n`;
+      md += `| 학습 참여도 | ${metrics.part}% | ${metrics.part >= 80 ? '최우수 참여' : (metrics.part >= 40 ? '성실 참여' : '학습 시작')} |\n`;
+      md += `| 학습 성실도 | ${metrics.sinc}% | ${metrics.sinc >= 80 ? '심화 질문 중심' : '일반 질문'} |\n`;
+      md += `| 개념 이해도 | ${metrics.und}% | ${metrics.und >= 80 ? '개념 습득 우수' : '개념 정립 진행 중'} |\n\n`;
 
       md += `## 💬 상세 질의응답 내역\n\n`;
 
@@ -1302,6 +1298,7 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
+        // 100회 기준 누적 점수 반영
         const metrics = calculateMetrics();
         currentScore = metrics.score;
         participationRate = metrics.part;
