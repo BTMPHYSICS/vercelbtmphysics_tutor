@@ -150,7 +150,6 @@
       border-bottom-left-radius: 2px;
     }
 
-    /* 텍스트 크기 계층화 디자인 */
     .bot-row .msg-content h1 {
       font-size: 17.5px;
       font-weight: 700;
@@ -182,7 +181,6 @@
       margin-bottom: 3px;
     }
 
-    /* 수식 간격 한 칸 띄움 설정 */
     .katex-display {
       margin: 8px 0 !important;
     }
@@ -200,7 +198,6 @@
       font-size: 12.5px;
     }
 
-    /* 시뮬레이터 창 반응형 화면 자동 맞춤 (가로/세로 비율 고정) */
     .sim-container {
       width: 100%;
       background: #0d1117;
@@ -285,7 +282,6 @@
       cursor: not-allowed;
     }
 
-    /* 팝업 모달 공통 스타일 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -425,7 +421,7 @@
     <button id="sendBtn" onclick="handleSend()">전송</button>
   </div>
 
-  <!-- 커스텀 알림/안내 팝업 모달 -->
+  <!-- 커스텀 알림 모달 -->
   <div class="modal-overlay" id="customAlertModal">
     <div class="modal-box" style="max-width: 380px;">
       <div class="modal-header">
@@ -521,9 +517,8 @@
 3. 수식 표현:
    - 모든 수학 공식과 물리 수식은 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
    - 수식 위아래로는 과도한 빈 줄을 넣지 말고 자연스럽게 한 줄의 문맥만 유지하세요.
-4. 시뮬레이션 요청 시 (화면 자동 맞춤 규칙):
-   - 캔버스와 뷰포트가 반응형으로 자동 조절되도록 아래 완전한 HTML 구조를 \`\`\`html 코드블록 안에 작성하세요.
-   - canvas 크기는 100% 가로폭에 맞추어 유동적으로 렌더링되도록 스크립트에서 canvas.width = window.innerWidth (또는 고정 비율 리사이징)를 적용하세요.
+4. 시뮬레이션 요청 시:
+   - 반드시 모바일 및 PC 화면에 100% 자동 맞춤형으로 렌더링되도록 아래 Canvas/JS 코드를 \`\`\`html 코드블록 안에 작성하세요.
 \`\`\`html
 <!DOCTYPE html>
 <html>
@@ -553,8 +548,10 @@
 \`\`\`
 5. 물리 외 질문 차단: 타 과목, 일상 잡담 등은 내용을 답변하지 않고 물리 질문을 유도하세요.
 6. 문장에 강조용 별표 기호는 사용하지 마세요.
+7. 아래에 첨부된 [학원 전용 강의 및 동영상 데이터]가 있는 경우, 이를 최우선 레퍼런스로 활용하여 볼츠만 쌤의 강의 스타일대로 설명하세요.
 `;
 
+    let lectureKnowledgeBase = "";
     let chatHistory = [];
     let rawChatLogs = [];
     let questionCount = 0;
@@ -563,12 +560,34 @@
     let sincerityRate = 0;
     let understandingRate = 0;
 
+    // data 폴더 안의 md 파일들을 자동 수집하여 학습 데이터로 적재
+    async function loadLectureData() {
+      try {
+        const listRes = await fetch('/data/list.json');
+        if (!listRes.ok) return;
+        const fileList = await listRes.json();
+
+        let combinedText = "\n\n[학원 전용 강의 및 동영상 추출 레퍼런스 데이터]\n";
+        for (const filePath of fileList) {
+          const res = await fetch(filePath);
+          if (res.ok) {
+            const mdText = await res.text();
+            combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
+          }
+        }
+        lectureKnowledgeBase = combinedText;
+      } catch (err) {
+        console.log("강의 데이터 로드 건너뜀:", err);
+      }
+    }
+
     window.onload = function() {
       const savedId = localStorage.getItem('btm_student_id');
       if (savedId) {
         document.getElementById('studentId').value = savedId;
       }
       loadLocalHistory();
+      loadLectureData();
     };
 
     function clearInputAlert() {
@@ -612,7 +631,6 @@
       }
     }
 
-    /* 커스텀 알림 창 제어 */
     function showAlert(title, message, onConfirm = null) {
       document.getElementById('alertTitle').innerText = title;
       document.getElementById('alertMessage').innerText = message;
@@ -858,7 +876,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+            systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION + lectureKnowledgeBase }] },
             contents: chatHistory
           })
         });
