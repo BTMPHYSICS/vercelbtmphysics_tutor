@@ -12,13 +12,16 @@
   <meta name="application-name" content="BTMPHYSICS-AI-TUTOR">
   <link rel="manifest" href="manifest.json?v=3">
 
+  <!-- 네온 아톰 물리 전용 아이콘 -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
 
+  <!-- KaTeX 수식 렌더링 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
+  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
@@ -670,16 +673,17 @@
    - 이미지가 첨부된 경우, 이미지 안의 조건과 물리량(질량, 거리, 저항값, 그래프 축 등)을 먼저 파악하고 이를 기반으로 단계별 풀이를 제공하세요.
    - 아래 [학원 전용 강의 및 동영상 추출 레퍼런스 데이터]를 최우선으로 반영하여 설명하세요.
 2. 심화 탐구 및 사고 확장을 위한 후속 질문(추가 발문) 제시:
-   - 답변의 맨 마지막 부분에, 학생이 방금 배운 개념을 제대로 체화했는지 점검하거나 연계된 물리 상황을 상상해볼 수 있는 '핵심 추가 질문 1~2가지'를 정중하게 건네주세요. (예: "만약 이 상황에서 저항이 병렬로 하나 더 연결된다면 전체 전류는 어떻게 바뀔까요?")
+   - 답변의 맨 마지막 부분에, 학생이 방금 배운 개념을 제대로 체화했는지 점검하거나 연계된 물리 상황을 상상해볼 수 있는 '핵심 추가 질문 1~2가지'를 정중하게 건네주세요.
 3. 스타일 및 문장 규칙:
    - 전문적인 물리 용어를 정확하게 사용하되, 직관적인 비유와 예시를 들어 명쾌하게 설명합니다.
    - 한국어 어법에 맞게 문장 띄어쓰기를 명확히 지키고 단정한 문장으로 작성합니다.
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시뮬레이션 요청 시: 완전한 KaTeX 렌더링 및 컨트롤바 밀착 규칙]
-- 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-- 시뮬레이터 내부에서 수식이 100% 렌더링되도록 반드시 아래 스크립트 템플릿 구조를 그대로 사용하세요:
+[시각 자료, 도해 및 시뮬레이션 규칙: 아스키(ASCII) 텍스트 그림 절대 금지]
+1. 회로도, 그래프, 자유물체도(힘의 분력도), 광선 추적도, 운동 궤적 등 모든 물리 도해를 설명할 때 문자 기호로 그린 아스키 아트(ASCII text art)는 절대 출력하지 마세요.
+2. 도해, 그래프, 물리 그림, 시뮬레이션을 요청받거나 시각적 설명이 필요할 때는 반드시 브라우저에서 선명하게 렌더링되는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
+3. 시뮬레이터 및 그래픽 내부에서 수식 렌더링(KaTeX)과 컨트롤바 밀착 배치가 완벽히 동작하도록 아래 템플릿 구조를 따르세요:
 \`\`\`html
 <!DOCTYPE html>
 <html>
@@ -751,7 +755,7 @@
         try {
           fileList = JSON.parse(rawJsonText);
         } catch (jsonErr) {
-          console.error("[볼츠만물리] data/list.json 파일의 JSON 문법 오류입니다. 쉼표(,)나 괄호를 확인해 주세요:", jsonErr.message);
+          console.error("[볼츠만물리] data/list.json 파일의 JSON 문법 오류입니다. 쉼표(,)나 따옴표를 확인해 주세요:", jsonErr.message);
           return;
         }
 
