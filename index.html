@@ -200,7 +200,7 @@
       font-size: 12.5px;
     }
 
-    /* 시뮬레이터 창 반응형 화면 자동 맞춤 */
+    /* 시뮬레이터 창 반응형 화면 자동 맞춤 (가로/세로 비율 고정) */
     .sim-container {
       width: 100%;
       background: #0d1117;
@@ -214,7 +214,9 @@
     }
     .sim-frame {
       width: 100%;
-      height: 380px;
+      aspect-ratio: 16 / 10;
+      min-height: 250px;
+      max-height: 60vh;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -283,13 +285,13 @@
       cursor: not-allowed;
     }
 
-    /* 팝업 모달 스타일 */
+    /* 팝업 모달 공통 스타일 */
     .modal-overlay {
       display: none;
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(3px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
       z-index: 1000;
       justify-content: center;
       align-items: center;
@@ -369,7 +371,7 @@
       gap: 8px;
       margin-top: 18px;
     }
-    .download-btn {
+    .modal-btn-primary {
       flex: 1;
       background: #1f6feb;
       color: #fff;
@@ -380,6 +382,15 @@
       font-weight: 600;
       cursor: pointer;
     }
+    .modal-btn-secondary {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -388,7 +399,7 @@
     <h1>⚛️ BTMPHYSICSAITUTOR</h1>
     <div class="header-actions">
       <button class="header-btn" onclick="openReportModal()">학습 기록</button>
-      <button class="header-btn" onclick="resetChat()">대화 초기화</button>
+      <button class="header-btn" onclick="openResetModal()">대화 초기화</button>
     </div>
   </header>
 
@@ -412,6 +423,22 @@
   <div class="input-area">
     <textarea id="questionInput" placeholder="물리 질문이나 시뮬레이션 요청을 입력하세요..."></textarea>
     <button id="sendBtn" onclick="handleSend()">전송</button>
+  </div>
+
+  <!-- 커스텀 알림/안내 팝업 모달 -->
+  <div class="modal-overlay" id="customAlertModal">
+    <div class="modal-box" style="max-width: 380px;">
+      <div class="modal-header">
+        <h2 id="alertTitle">📌 볼츠만물리 알림</h2>
+        <button class="close-btn" onclick="closeAlertModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="alertMessage" style="font-size: 14px; line-height: 1.6; color: #e6edf3;"></p>
+      </div>
+      <div class="modal-footer" id="alertFooter">
+        <button class="modal-btn-primary" onclick="closeAlertModal()">확인</button>
+      </div>
+    </div>
   </div>
 
   <!-- 학습기록 팝업 모달 -->
@@ -468,7 +495,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="download-btn" onclick="exportToNotionMarkdown()">Notion용 MD 파일 다운로드</button>
+        <button class="modal-btn-primary" onclick="exportToNotionMarkdown()">Notion용 MD 파일 다운로드</button>
       </div>
     </div>
   </div>
@@ -494,28 +521,32 @@
 3. 수식 표현:
    - 모든 수학 공식과 물리 수식은 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
    - 수식 위아래로는 과도한 빈 줄을 넣지 말고 자연스럽게 한 줄의 문맥만 유지하세요.
-4. 시뮬레이션 요청 시:
-   - 반드시 모바일 및 PC 화면에 100% 자동 맞춤형으로 렌더링되도록 아래 Canvas/JS 코드를 \`\`\`html 코드블록 안에 작성하세요.
-   - 캔버스 너비와 높이는 컨테이너에 맞게 유동적으로 조절되도록 작성하세요.
+4. 시뮬레이션 요청 시 (화면 자동 맞춤 규칙):
+   - 캔버스와 뷰포트가 반응형으로 자동 조절되도록 아래 완전한 HTML 구조를 \`\`\`html 코드블록 안에 작성하세요.
+   - canvas 크기는 100% 가로폭에 맞추어 유동적으로 렌더링되도록 스크립트에서 canvas.width = window.innerWidth (또는 고정 비율 리사이징)를 적용하세요.
 \`\`\`html
 <!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-  body { margin: 0; padding: 10px; background: #161b22; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; box-sizing: border-box; overflow: hidden; }
-  canvas { width: 100%; max-width: 480px; height: auto; aspect-ratio: 16/10; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
-  .controls { margin-top: 8px; display: flex; gap: 8px; font-size: 13px; }
-  button { background: #238636; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #161b22; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; padding: 8px; }
+  .canvas-wrap { width: 100%; height: calc(100vh - 50px); display: flex; align-items: center; justify-content: center; }
+  canvas { width: 100%; height: 100%; object-fit: contain; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
+  .controls { height: 40px; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  button { background: #238636; color: white; border: none; padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: 600; }
 </style>
 </head>
 <body>
-  <canvas id="simCanvas" width="480" height="300"></canvas>
+  <div class="canvas-wrap">
+    <canvas id="simCanvas" width="600" height="380"></canvas>
+  </div>
   <div class="controls">
     <button onclick="resetSim()">다시 시작</button>
   </div>
   <script>
-    // 물리 수식 기반 Canvas 2D 애니메이션 코드 작성 (requestAnimationFrame 활용)
+    // 물리 수식 기반 Canvas 2D 애니메이션 코드 작성
   <\/script>
 </body>
 </html>
@@ -579,6 +610,32 @@
           appendMessageUI(item.sender, item.text);
         });
       }
+    }
+
+    /* 커스텀 알림 창 제어 */
+    function showAlert(title, message, onConfirm = null) {
+      document.getElementById('alertTitle').innerText = title;
+      document.getElementById('alertMessage').innerText = message;
+      const footer = document.getElementById('alertFooter');
+      
+      if (onConfirm) {
+        footer.innerHTML = `
+          <button class="modal-btn-secondary" onclick="closeAlertModal()">취소</button>
+          <button class="modal-btn-primary" id="alertConfirmBtn">확인</button>
+        `;
+        document.getElementById('alertConfirmBtn').onclick = function() {
+          closeAlertModal();
+          onConfirm();
+        };
+      } else {
+        footer.innerHTML = `<button class="modal-btn-primary" onclick="closeAlertModal()">확인</button>`;
+      }
+      
+      document.getElementById('customAlertModal').style.display = 'flex';
+    }
+
+    function closeAlertModal() {
+      document.getElementById('customAlertModal').style.display = 'none';
     }
 
     function renderMathAndCode(element) {
@@ -672,8 +729,8 @@
       return content;
     }
 
-    function resetChat() {
-      if (confirm("대화 및 학습 기록을 초기화하시겠습니까?")) {
+    function openResetModal() {
+      showAlert("대화 초기화", "지금까지의 대화와 학습 기록을 초기화하시겠습니까?", function() {
         chatHistory = [];
         rawChatLogs = [];
         questionCount = 0;
@@ -695,15 +752,13 @@
               <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요.</p>
             </div>
           </div>`;
-      }
+      });
     }
 
-    // 모달 제어 함수
     function openReportModal() {
       const studentInput = document.getElementById('studentId');
       const studentName = studentInput.value.trim() || "미등록 학생";
 
-      // 지표 계산
       participationRate = Math.min(questionCount * 20, 100);
       sincerityRate = questionCount > 0 ? Math.min(Math.round((currentScore / (questionCount * 20)) * 100), 100) : 0;
       understandingRate = questionCount > 0 ? Math.min(Math.round((participationRate * 0.4) + (sincerityRate * 0.6)), 100) : 0;
@@ -728,11 +783,10 @@
       document.getElementById('reportModal').style.display = 'none';
     }
 
-    // Notion 호환 Markdown(.md) 파일 내보내기
     function exportToNotionMarkdown() {
       const studentName = document.getElementById('studentId').value.trim() || "학생";
       if (rawChatLogs.length === 0) {
-        alert("저장할 대화 내역이 없습니다.");
+        showAlert("알림", "저장할 대화 내역이 없습니다.");
         return;
       }
 
@@ -776,9 +830,8 @@
 
       const studentName = studentInput.value.trim();
 
-      // 1. 학번/이름 입력 필수 검증
       if (!studentName) {
-        alert("학습 시작 전 상단에 [학번과 이름]을 먼저 입력해 주세요.");
+        showAlert("학습 시작 안내", "질문을 시작하기 전에 상단에 [학번과 이름]을 먼저 입력해 주세요.");
         studentInput.classList.add('input-alert');
         studentInput.focus();
         return;
@@ -824,7 +877,6 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
-        // 학습 점수 산출
         const lenScore = Math.min(question.length * 2, 40);
         const countScore = Math.min(questionCount * 15, 60);
         currentScore = Math.min(lenScore + countScore, 100);
