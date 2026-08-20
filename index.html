@@ -875,33 +875,33 @@
       });
     }
 
-    // 시뮬레이터 내부 KaTeX 인라인 수식 완벽 렌더링 스크립트 주입 엔진
+    // HTML 내부 스크립트 충돌 방지 KaTeX 주입 함수
     function injectKaTeXToSimulation(rawCode) {
-      const katexInjection = `
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
-<script>
-  function renderSimMath() {
-    if (window.renderMathInElement) {
-      renderMathInElement(document.body, {
-        delimiters: [
-          {left: '$$', right: '$$', display: true},
-          {left: '$', right: '$', display: false}
-        ],
-        throwOnError: false
-      });
-    }
-  }
-  window.addEventListener('DOMContentLoaded', renderSimMath);
-  window.addEventListener('load', () => {
-    renderSimMath();
-    setTimeout(renderSimMath, 150);
-    setTimeout(renderSimMath, 500);
-    setTimeout(renderSimMath, 1200);
-  });
-<\/script>
-`;
+      const closeScript = '<' + '/script>';
+      const katexInjection = 
+        '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">\n' +
+        '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">' + closeScript + '\n' +
+        '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">' + closeScript + '\n' +
+        '<script>\n' +
+        '  function renderSimMath() {\n' +
+        '    if (window.renderMathInElement) {\n' +
+        '      renderMathInElement(document.body, {\n' +
+        '        delimiters: [\n' +
+        '          {left: "$$", right: "$$", display: true},\n' +
+        '          {left: "$", right: "$", display: false}\n' +
+        '        ],\n' +
+        '        throwOnError: false\n' +
+        '      });\n' +
+        '    }\n' +
+        '  }\n' +
+        '  window.addEventListener("DOMContentLoaded", renderSimMath);\n' +
+        '  window.addEventListener("load", function() {\n' +
+        '    renderSimMath();\n' +
+        '    setTimeout(renderSimMath, 200);\n' +
+        '    setTimeout(renderSimMath, 700);\n' +
+        '  });\n' +
+        closeScript + '\n';
+
       if (rawCode.includes('<head>')) {
         return rawCode.replace('<head>', '<head>' + katexInjection);
       } else if (rawCode.includes('<html>')) {
@@ -1105,25 +1105,20 @@
       });
     }
 
-    /* 100회 완주 비례 선형 누적 지표 산출 계산기 (완벽 재조정) */
     function calculateMetrics() {
       if (questionCount === 0) {
         return { part: 0, sinc: 0, und: 0, score: 0 };
       }
 
-      // 1. 참여도: 질문 100회 도달 시 100% (1회당 정확히 1% 누적)
       const part = Math.min(questionCount, 100);
 
-      // 2. 성실도: 누적 질문수(최대 80%) + 평균 질문 길이(최대 20%) -> 100회 채워야 100% 도달
       const avgLen = totalInputLength / questionCount;
-      const lenBonus = Math.min(avgLen / 50, 1.0) * 20; // 0 ~ 20점
-      const countPart = Math.min(questionCount / 100, 1.0) * 80; // 0 ~ 80점
+      const lenBonus = Math.min(avgLen / 50, 1.0) * 20;
+      const countPart = Math.min(questionCount / 100, 1.0) * 80;
       const sinc = Math.min(Math.round(countPart + lenBonus), 100);
 
-      // 3. 이해도: 참여도 45% + 성실도 45% + 회차 보정 10% (100회 기준 균형 누적)
       const und = Math.min(Math.round((part * 0.45) + (sinc * 0.45) + (Math.min(questionCount, 100) * 0.1)), 100);
 
-      // 4. 종합 점수: 100회 기준 종합 학업 성취도
       const score = Math.min(Math.round((part * 0.4) + (sinc * 0.3) + (und * 0.3)), 100);
 
       return { part, sinc, und, score };
@@ -1303,7 +1298,6 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
-        // 100회 기준 누적 점수 동기화
         const metrics = calculateMetrics();
         currentScore = metrics.score;
         participationRate = metrics.part;
