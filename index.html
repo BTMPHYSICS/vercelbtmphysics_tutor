@@ -198,7 +198,7 @@
       font-size: 12.5px;
     }
 
-   .sim-container {
+    .sim-container {
       width: 100%;
       background: #0d1117;
       border: 1px solid #30363d;
@@ -283,7 +283,6 @@
       cursor: not-allowed;
     }
 
-    /* 모달 팝업 스타일 */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -506,7 +505,7 @@
     const GEMINI_API_KEY = "AQ.Ab8RN6JIZhw_rcrkysD5Cl-raQWwAtsCjRag7JHn-Fw090ctOQ";
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyh_LWY0ZmWlLIhOP4KOjB9bRSASP9NaSaFNJBqKmE3r8LdtpTZgFrTDGyPzXvSP3dbCQ/exec";
 
-const SYSTEM_INSTRUCTION = `
+    const SYSTEM_INSTRUCTION = `
 당신은 '볼츠만물리' 학원의 공식 물리 학습 전용 AI 튜터인 'btmphysics AI Tutor'입니다.
 
 [핵심 제한 규칙: 물리 외 질문 원천 차단]
@@ -537,11 +536,12 @@ const SYSTEM_INSTRUCTION = `
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
 [시뮬레이션 요청 시]
-- 실시간 실행 가능한 독립형 HTML/Canvas 코드를 ```html 코드블록 안에 작성하세요.
+- 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
 - 화면 크기 맞춤 규칙: 
   1) body 스타일에 margin:0; padding:4px; overflow:hidden; width:100vw; height:100vh; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:space-between; 를 적용하세요.
-  2) canvas는 width="320" height="200" 스타일에 max-width:100%; max-height:calc(100vh - 45px); object-fit:contain; 을 주어 스크롤바가 전혀 생기지 않고 화면에 꽉 차게 렌더링되도록 작성하세요..
+  2) canvas는 width="320" height="200" 스타일에 max-width:100%; max-height:calc(100vh - 45px); object-fit:contain; 을 주어 스크롤바가 전혀 생기지 않고 화면에 꽉 차게 렌더링되도록 작성하세요.
 `;
+
     let lectureKnowledgeBase = "";
     let chatHistory = [];
     let rawChatLogs = [];
