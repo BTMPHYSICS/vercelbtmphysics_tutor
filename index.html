@@ -130,12 +130,16 @@
       background: #21262d;
       border: 1px solid #30363d;
     }
+    .msg-wrapper {
+      position: relative;
+      max-width: calc(100% - 45px);
+    }
     .msg-content {
       padding: 12px 16px;
+      padding-top: 14px;
       border-radius: 12px;
       line-height: 1.65;
       word-break: break-word;
-      max-width: calc(100% - 45px);
     }
     .user-row .msg-content {
       background-color: #1f6feb;
@@ -151,7 +155,33 @@
       font-size: 13.5px;
     }
 
-    /* 텍스트 크기 계층화 디자인 (제목 크게, 설명 적당히 작게) */
+    /* 복사 버튼 스타일 */
+    .copy-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.2s ease;
+      opacity: 0.7;
+    }
+    .msg-wrapper:hover .copy-btn {
+      opacity: 1;
+    }
+    .copy-btn:hover {
+      background: #30363d;
+      color: #58a6ff;
+    }
+
+    /* 텍스트 크기 및 글자색 차등화 디자인 */
     .bot-row .msg-content h1 {
       font-size: 18px !important;
       font-weight: 700;
@@ -184,16 +214,16 @@
     }
     .bot-row .msg-content ul, .bot-row .msg-content ol {
       margin: 4px 0 8px 20px;
-      font-size: 13.5px !important;
+      font-size: 13px !important;
       line-height: 1.65;
-      color: #e6edf3;
+      color: #c9d1d9;
     }
     .bot-row .msg-content li {
       margin-bottom: 4px;
     }
     .bot-row .msg-content strong {
       font-weight: 600;
-      color: #79c0ff;
+      color: #a5d6ff;
     }
 
     .katex-display {
@@ -487,9 +517,12 @@
   <div id="chat-box">
     <div class="msg-row bot-row">
       <div class="avatar">👨‍🏫</div>
-      <div class="msg-content">
-        <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
-        <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요. 사진(📷)을 첨부하여 교재 문제나 그래프를 질문하셔도 좋습니다.</p>
+      <div class="msg-wrapper">
+        <button class="copy-btn" onclick="copyMessageText(this)">📋 복사</button>
+        <div class="msg-content">
+          <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+          <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요. 사진(📷)을 첨부하여 교재 문제나 그래프를 질문하셔도 좋습니다.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -761,6 +794,24 @@
       document.getElementById('imagePreviewBar').style.display = 'none';
     }
 
+    /* 클립보드 텍스트 복사 함수 */
+    function copyMessageText(button) {
+      const wrapper = button.closest('.msg-wrapper');
+      const rawText = wrapper.getAttribute('data-raw-text') || wrapper.querySelector('.msg-content').innerText;
+
+      navigator.clipboard.writeText(rawText).then(() => {
+        const originalText = button.innerHTML;
+        button.innerHTML = '✓ 복사됨';
+        button.style.color = '#58a6ff';
+        setTimeout(() => {
+          button.innerHTML = originalText;
+          button.style.color = '';
+        }, 1500);
+      }).catch(() => {
+        showAlert("알림", "텍스트 복사에 실패했습니다.");
+      });
+    }
+
     function renderMathAndCode(element) {
       if (window.renderMathInElement) {
         renderMathInElement(element, {
@@ -805,11 +856,9 @@
       return finalHtml;
     }
 
-    // 마크다운 문단 및 태그 변환기 (글자 크기 및 계층 구조 보장)
     function formatMarkdownText(text) {
       if (!text) return '';
 
-      // 코드 블록 먼저 보호 및 치환
       const codeBlocks = [];
       let str = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
         const id = `__CODEBLOCK_${codeBlocks.length}__`;
@@ -817,7 +866,6 @@
         return id;
       });
 
-      // 줄 단위 분리 파싱
       const lines = str.split(/\r?\n/);
       let htmlResult = '';
       let inList = false;
@@ -834,7 +882,6 @@
           continue;
         }
 
-        // 코드 블록 복원
         if (line.startsWith('__CODEBLOCK_')) {
           if (inList) {
             htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
@@ -845,7 +892,6 @@
           continue;
         }
 
-        // 제목 태그 계층 변환
         if (/^###\s+/.test(line)) {
           if (inList) { htmlResult += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
           htmlResult += `<h3>${line.replace(/^###\s+/, '')}</h3>`;
@@ -855,9 +901,7 @@
         } else if (/^#\s+/.test(line)) {
           if (inList) { htmlResult += listType === 'ul' ? '</ul>' : '</ol>'; inList = false; }
           htmlResult += `<h1>${line.replace(/^#\s+/, '')}</h1>`;
-        } 
-        // 불릿 목록 변환
-        else if (/^[-*]\s+/.test(line)) {
+        } else if (/^[-*]\s+/.test(line)) {
           if (!inList || listType !== 'ul') {
             if (inList) htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
             htmlResult += '<ul>';
@@ -865,9 +909,7 @@
             listType = 'ul';
           }
           htmlResult += `<li>${line.replace(/^[-*]\s+/, '')}</li>`;
-        }
-        // 번호 목록 변환
-        else if (/^\d+\.\s+/.test(line)) {
+        } else if (/^\d+\.\s+/.test(line)) {
           if (!inList || listType !== 'ol') {
             if (inList) htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
             htmlResult += '<ol>';
@@ -875,9 +917,7 @@
             listType = 'ol';
           }
           htmlResult += `<li>${line.replace(/^\d+\.\s+/, '')}</li>`;
-        }
-        // 일반 본문 문단 (<p> 감싸기)
-        else {
+        } else {
           if (inList) {
             htmlResult += listType === 'ul' ? '</ul>' : '</ol>';
             inList = false;
@@ -902,6 +942,18 @@
       avatar.className = 'avatar';
       avatar.innerText = sender === 'user' ? '🧑‍🎓' : '👨‍🏫';
 
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg-wrapper';
+      wrapper.setAttribute('data-raw-text', text);
+
+      if (!isLoading) {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.innerHTML = '📋 복사';
+        copyBtn.onclick = function() { copyMessageText(this); };
+        wrapper.appendChild(copyBtn);
+      }
+
       const content = document.createElement('div');
       content.className = 'msg-content';
 
@@ -922,8 +974,9 @@
         content.appendChild(textWrapper);
       }
 
+      wrapper.appendChild(content);
       row.appendChild(avatar);
-      row.appendChild(content);
+      row.appendChild(wrapper);
       chatBox.appendChild(row);
       chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -931,7 +984,7 @@
         renderMathAndCode(content);
       }
 
-      return content;
+      return { wrapper, content };
     }
 
     function openResetModal() {
@@ -952,9 +1005,12 @@
         chatBox.innerHTML = `
           <div class="msg-row bot-row">
             <div class="avatar">👨‍🏫</div>
-            <div class="msg-content">
-              <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
-              <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요. 사진(📷) 첨부 질문도 환영합니다.</p>
+            <div class="msg-wrapper">
+              <button class="copy-btn" onclick="copyMessageText(this)">📋 복사</button>
+              <div class="msg-content">
+                <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+                <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요. 사진(📷) 첨부 질문도 환영합니다.</p>
+              </div>
             </div>
           </div>`;
       });
@@ -1069,7 +1125,7 @@
       clearSelectedImage();
       sendBtn.disabled = true;
 
-      const loadingElement = appendMessageUI('bot', '', true);
+      const { wrapper: botWrapper, content: botContent } = appendMessageUI('bot', '', true);
 
       chatHistory.push({ role: "user", parts: userParts });
       questionCount++;
@@ -1088,13 +1144,23 @@
         const data = await response.json();
 
         if (data.error) {
-          loadingElement.innerText = "API 오류: " + data.error.message;
+          botContent.innerText = "API 오류: " + data.error.message;
           return;
         }
 
         const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
-        loadingElement.innerHTML = parseContent(botReply);
-        renderMathAndCode(loadingElement);
+        botWrapper.setAttribute('data-raw-text', botReply);
+
+        if (!botWrapper.querySelector('.copy-btn')) {
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'copy-btn';
+          copyBtn.innerHTML = '📋 복사';
+          copyBtn.onclick = function() { copyMessageText(this); };
+          botWrapper.insertBefore(copyBtn, botContent);
+        }
+
+        botContent.innerHTML = parseContent(botReply);
+        renderMathAndCode(botContent);
 
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
@@ -1109,7 +1175,7 @@
         saveLocalHistory();
         logToGoogleSheet(studentName, question || "(이미지 질문)", botReply, currentScore);
       } catch (err) {
-        loadingElement.innerText = "통신 오류: " + err.message;
+        botContent.innerText = "통신 오류: " + err.message;
       } finally {
         sendBtn.disabled = false;
         document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
