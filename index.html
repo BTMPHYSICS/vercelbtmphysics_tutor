@@ -15,12 +15,10 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
 
-  <!-- KaTeX 수식 렌더링 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
@@ -605,7 +603,7 @@
         <div class="gauge-section">
           <div class="gauge-item">
             <div class="gauge-label">
-              <span>학습 참여도 (질문 누적 100회 기준)</span>
+              <span>학습 참여도 (질문 누적)</span>
               <span id="modalParticipationVal">0%</span>
             </div>
             <div class="gauge-bar-bg">
@@ -615,7 +613,7 @@
 
           <div class="gauge-item">
             <div class="gauge-label">
-              <span>학습 성실도 (질문 깊이 및 지속성)</span>
+              <span>학습 성실도 (질문 구체성)</span>
               <span id="modalSincerityVal">0%</span>
             </div>
             <div class="gauge-bar-bg">
@@ -625,7 +623,7 @@
 
           <div class="gauge-item">
             <div class="gauge-label">
-              <span>개념 이해도 (대화 성숙도)</span>
+              <span>개념 이해도 (대화 깊이)</span>
               <span id="modalUnderstandingVal">0%</span>
             </div>
             <div class="gauge-bar-bg">
@@ -875,39 +873,36 @@
       });
     }
 
-    // HTML 내부 스크립트 충돌 방지 KaTeX 주입 함수
     function injectKaTeXToSimulation(rawCode) {
-      const closeScript = '<' + '/script>';
-      const katexInjection = 
-        '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">\n' +
-        '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">' + closeScript + '\n' +
-        '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">' + closeScript + '\n' +
-        '<script>\n' +
-        '  function renderSimMath() {\n' +
-        '    if (window.renderMathInElement) {\n' +
-        '      renderMathInElement(document.body, {\n' +
-        '        delimiters: [\n' +
-        '          {left: "$$", right: "$$", display: true},\n' +
-        '          {left: "$", right: "$", display: false}\n' +
-        '        ],\n' +
-        '        throwOnError: false\n' +
-        '      });\n' +
-        '    }\n' +
-        '  }\n' +
-        '  window.addEventListener("DOMContentLoaded", renderSimMath);\n' +
-        '  window.addEventListener("load", function() {\n' +
-        '    renderSimMath();\n' +
-        '    setTimeout(renderSimMath, 200);\n' +
-        '    setTimeout(renderSimMath, 700);\n' +
-        '  });\n' +
-        closeScript + '\n';
-
+      const katexHead = `
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
+<script>
+  function renderAllMath() {
+    if (window.renderMathInElement) {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false}
+        ],
+        throwOnError: false
+      });
+    }
+  }
+  window.addEventListener('load', () => {
+    renderAllMath();
+    setTimeout(renderAllMath, 200);
+    setTimeout(renderAllMath, 600);
+  });
+<\/script>
+`;
       if (rawCode.includes('<head>')) {
-        return rawCode.replace('<head>', '<head>' + katexInjection);
+        return rawCode.replace('<head>', '<head>' + katexHead);
       } else if (rawCode.includes('<html>')) {
-        return rawCode.replace('<html>', '<html><head>' + katexInjection + '</head>');
+        return rawCode.replace('<html>', '<html><head>' + katexHead + '</head>');
       } else {
-        return '<!DOCTYPE html><html><head>' + katexInjection + '</head><body>' + rawCode + '</body></html>';
+        return katexHead + rawCode;
       }
     }
 
@@ -1105,20 +1100,25 @@
       });
     }
 
+    /* 100회 질문 기준 장기 완만 누적 지표 산출 계산기 */
     function calculateMetrics() {
       if (questionCount === 0) {
         return { part: 0, sinc: 0, und: 0, score: 0 };
       }
 
+      // 1. 참여도: 질문 1회당 1%씩 정직하게 상승 (질문 100회 도달 시 100%)
       const part = Math.min(questionCount, 100);
 
+      // 2. 성실도: 질문당 평균 글자 수(45자 기준)와 누적 질문 횟수(100회 기준)를 완만하게 결합
       const avgLen = totalInputLength / questionCount;
-      const lenBonus = Math.min(avgLen / 50, 1.0) * 20;
-      const countPart = Math.min(questionCount / 100, 1.0) * 80;
-      const sinc = Math.min(Math.round(countPart + lenBonus), 100);
+      const lenFactor = Math.min(avgLen / 45, 1.0); // 0 ~ 1
+      const countFactor = Math.min(questionCount / 100, 1.0); // 0 ~ 1
+      const sinc = Math.min(Math.round(10 + (lenFactor * 40) + (countFactor * 50)), 100);
 
-      const und = Math.min(Math.round((part * 0.45) + (sinc * 0.45) + (Math.min(questionCount, 100) * 0.1)), 100);
+      // 3. 이해도: 100회 주기에 맞춘 완만한 대화 성숙도
+      const und = Math.min(Math.round((part * 0.5) + (sinc * 0.4) + (Math.min(questionCount, 100) * 0.1)), 100);
 
+      // 4. 종합 점수: 100회 완주를 목표로 하는 종합 성취도
       const score = Math.min(Math.round((part * 0.4) + (sinc * 0.3) + (und * 0.3)), 100);
 
       return { part, sinc, und, score };
@@ -1168,7 +1168,7 @@
       md += `> 학습 일시: ${new Date().toLocaleString()}\n`;
       md += `> 종합 학습 점수: ${metrics.score} / 100 점\n\n`;
 
-      md += `## 📊 학습 성취도 지표 (100회 완주 기준)\n\n`;
+      md += `## 📊 학습 성취도 지표\n\n`;
       md += `| 항목 | 수치 | 평가 수준 |\n`;
       md += `| :--- | :--- | :--- |\n`;
       md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 80 ? '마스터 단계' : (questionCount >= 40 ? '심화 학습 중' : '기초 탐색 중')} |\n`;
@@ -1298,6 +1298,7 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
+        // 100회 기준 누적 점수 반영
         const metrics = calculateMetrics();
         currentScore = metrics.score;
         participationRate = metrics.part;
