@@ -17,9 +17,12 @@
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- 코드 하이라이팅 (시각화 및 시뮬레이션 코드 지원) -->
+  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+  <!-- 시각화 차트 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -82,7 +85,7 @@
     .msg-row {
       display: flex;
       gap: 10px;
-      max-width: 90%;
+      max-width: 95%;
     }
     .msg-row.user-row {
       align-self: flex-end;
@@ -109,6 +112,7 @@
       font-size: 14.5px;
       line-height: 1.6;
       word-break: break-word;
+      width: 100%;
     }
     .user-row .msg-content {
       background-color: #1f6feb;
@@ -132,6 +136,35 @@
     code {
       font-family: monospace;
       font-size: 13px;
+    }
+    .sim-container {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      margin: 12px 0;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .sim-frame {
+      width: 100%;
+      height: 320px;
+      border: none;
+      border-radius: 6px;
+      background: #161b22;
+    }
+    .sim-toggle-btn {
+      background: #238636;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 8px;
+      align-self: flex-start;
     }
     .spinner {
       display: inline-block;
@@ -199,12 +232,12 @@
   <div id="chat-box">
     <div class="msg-row bot-row">
       <div class="avatar">👨‍🏫</div>
-      <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념, 문제 풀이, 물리 현상 시뮬레이션 코드 등을 질문해 주세요.</div>
+      <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념을 질문하거나, '포물선 운동 시뮬레이션 보여줘', '단진자 운동 시각화해줘'와 같이 요청하시면 화면에서 직접 움직이는 물리 시뮬레이터를 띄워드립니다.</div>
     </div>
   </div>
 
   <div class="input-area">
-    <textarea id="questionInput" placeholder="물리 질문을 입력하세요..."></textarea>
+    <textarea id="questionInput" placeholder="물리 질문이나 시뮬레이션 요청을 입력하세요..."></textarea>
     <button id="sendBtn" onclick="handleSend()">전송</button>
   </div>
 
@@ -219,12 +252,34 @@
     const SYSTEM_INSTRUCTION = `
 당신은 볼츠만물리 학원의 공식 물리 학습 전용 AI 튜터인 btmphysics AI Tutor입니다.
 
-[물리 질문 답변 가이드라인]
-1. 물리학습 및 학원 안내 전용: 타 과목, 일상 잡담 등은 내용을 답변하지 않고 정중히 거절한 후 물리 질문을 유도하세요.
-2. 수식 표현: 모든 수학 공식과 물리 수식은 반드시 KaTeX/LaTeX 문법으로 작성하세요. (단독 수식은 $$수식$$, 인라인 수식은 $수식$)
-3. 시뮬레이션 및 시각화 지원: 물리 현상 시뮬레이션이나 그래프 시각화 요청이 있을 경우, 실행 가능한 파이썬(matplotlib, numpy, vpython 등) 코드를 마크다운 코드블록 안에 정갈하게 작성해 주세요.
-4. 신원 규칙: 볼츠만 쌤은 학원 원장 선생님을 의미하며, 물리학자 루트비히 볼츠만은 통계역학/엔트로피 질문 시에만 설명합니다.
-5. 문장 규칙: 텍스트에 강조용 별표 기호는 사용하지 마세요.
+[물리 시뮬레이션 및 시각화 출력 특별 규칙]
+1. 사용자가 시각화, 시뮬레이션, 그래프, 인터랙티브 데모, 움직이는 그림을 요청하면 반드시 실시간 실행 가능한 독립형 HTML/JS/Canvas 코드를 아래 포맷으로 작성하세요:
+\`\`\`html
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; background: #161b22; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+  canvas { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
+  .controls { margin-top: 6px; display: flex; gap: 8px; font-size: 12px; }
+  button { background: #238636; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+</style>
+</head>
+<body>
+  <canvas id="simCanvas" width="340" height="230"></canvas>
+  <div class="controls">
+    <button onclick="resetSim()">다시 시작</button>
+  </div>
+  <script>
+    // 물리 수식 기반 Canvas 2D 애니메이션 코드 작성 (requestAnimationFrame 활용)
+  <\/script>
+</body>
+</html>
+\`\`\`
+
+2. 수식 표현: 모든 수학 공식과 물리 수식은 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
+3. 볼츠만 쌤은 학원 원장 선생님을 의미하며, 물리학자 볼츠만은 통계역학 질문 시에만 설명합니다.
+4. 문장에 강조용 별표 기호는 사용하지 마세요.
 `;
 
     let chatHistory = [];
@@ -242,16 +297,6 @@
       localStorage.setItem('btm_student_id', id);
     }
 
-    function parseMarkdown(text) {
-      // 코드 블록 변환
-      let parsed = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
-        return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
-      });
-      // 일반 줄바꿈 처리
-      parsed = parsed.replace(/\n/g, '<br>');
-      return parsed;
-    }
-
     function renderMathAndCode(element) {
       if (window.renderMathInElement) {
         renderMathInElement(element, {
@@ -267,6 +312,41 @@
       });
     }
 
+    function parseContent(text) {
+      const htmlBlockRegex = /```html\n([\s\S]*?)```/g;
+      let match;
+      let lastIndex = 0;
+      let finalHtml = '';
+
+      while ((match = htmlBlockRegex.exec(text)) !== null) {
+        let beforeText = text.substring(lastIndex, match.index);
+        finalHtml += parseMarkdownSimple(beforeText);
+
+        const codeContent = match[1];
+        const blob = new Blob([codeContent], { type: 'text/html' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        finalHtml += `
+          <div class="sim-container">
+            <button class="sim-toggle-btn" onclick="this.nextElementSibling.src='${blobUrl}'">▶ 실시간 물리 시뮬레이터 재생</button>
+            <iframe class="sim-frame" src="${blobUrl}"></iframe>
+          </div>
+        `;
+        lastIndex = htmlBlockRegex.lastIndex;
+      }
+
+      finalHtml += parseMarkdownSimple(text.substring(lastIndex));
+      return finalHtml;
+    }
+
+    function parseMarkdownSimple(text) {
+      let parsed = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+      });
+      parsed = parsed.replace(/\n/g, '<br>');
+      return parsed;
+    }
+
     function appendMessage(sender, text, isLoading = false) {
       const chatBox = document.getElementById('chat-box');
       const row = document.createElement('div');
@@ -280,9 +360,9 @@
       content.className = 'msg-content';
 
       if (isLoading) {
-        content.innerHTML = '<span class="spinner"></span>답변을 준비하고 있습니다...';
+        content.innerHTML = '<span class="spinner"></span>답변 및 시뮬레이터를 생성하고 있습니다...';
       } else {
-        content.innerHTML = parseMarkdown(text);
+        content.innerHTML = parseContent(text);
       }
 
       row.appendChild(avatar);
@@ -304,7 +384,7 @@
         chatBox.innerHTML = `
           <div class="msg-row bot-row">
             <div class="avatar">👨‍🏫</div>
-            <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념이나 시뮬레이션 코드를 질문해 주세요.</div>
+            <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념을 질문하거나 시뮬레이션을 요청해 주세요.</div>
           </div>`;
       }
     }
@@ -348,7 +428,7 @@
         }
 
         const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
-        loadingElement.innerHTML = parseMarkdown(botReply);
+        loadingElement.innerHTML = parseContent(botReply);
         renderMathAndCode(loadingElement);
 
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
