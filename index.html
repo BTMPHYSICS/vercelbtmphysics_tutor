@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BTMPHYSICS-AI-TUTOR</title>
   
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="BTMPHYSICS-AI-TUTOR">
@@ -744,15 +745,22 @@
     let selectedImageBase64 = null;
     let selectedImageMime = null;
 
-    // data/list.json 및 md 파일 적재 상태 진단 로더
     async function loadLectureData() {
       try {
         const listRes = await fetch('/data/list.json');
         if (!listRes.ok) {
-          console.warn("[볼츠만물리] /data/list.json 파일을 찾을 수 없습니다. (상태 코드: " + listRes.status + ")");
+          console.warn("[볼츠만물리] /data/list.json 파일을 찾을 수 없습니다. 상태 코드: " + listRes.status);
           return;
         }
-        const fileList = await listRes.json();
+        
+        const rawJsonText = await listRes.text();
+        let fileList;
+        try {
+          fileList = JSON.parse(rawJsonText);
+        } catch (jsonErr) {
+          console.error("[볼츠만물리] data/list.json 파일의 JSON 문법 오류입니다. 쉼표(,)나 괄호를 확인해 주세요:", jsonErr.message);
+          return;
+        }
 
         let combinedText = "\n\n[학원 전용 강의 및 동영상 추출 레퍼런스 데이터]\n";
         let loadedCount = 0;
@@ -765,14 +773,14 @@
               combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
               loadedCount++;
             } else {
-              console.warn(`[볼츠만물리] 강의 파일 로드 실패: ${filePath} (${res.status})`);
+              console.warn(`[볼츠만물리] 강의 파일 로드 실패: ${filePath} (상태: ${res.status})`);
             }
           } catch (fileErr) {
             console.error(`[볼츠만물리] 파일 읽기 에러 (${filePath}):`, fileErr);
           }
         }
         lectureKnowledgeBase = combinedText;
-        console.log(`%c[볼츠만물리] 강의 데이터 적재 완료: ${loadedCount}개 파일 (총 ${combinedText.length}자)`, "color: #58a6ff; font-weight: bold;");
+        console.log(`%c[볼츠만물리] 강의 데이터 적재 성공: ${loadedCount}개 파일 (총 ${combinedText.length}자)`, "color: #58a6ff; font-weight: bold; font-size: 13px;");
       } catch (err) {
         console.error("[볼츠만물리] 강의 데이터 로드 중 전체 에러:", err);
       }
