@@ -21,9 +21,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
-  <!-- 시각화 차트 라이브러리 -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -37,31 +34,40 @@
     }
     header {
       background-color: #161b22;
-      padding: 12px 16px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid #30363d;
     }
     header h1 {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       color: #58a6ff;
+    }
+    .header-actions {
+      display: flex;
+      gap: 6px;
     }
     .header-btn {
       background: #21262d;
       border: 1px solid #30363d;
       color: #c9d1d9;
-      padding: 5px 10px;
+      padding: 5px 9px;
       border-radius: 6px;
-      font-size: 12px;
+      font-size: 11.5px;
       cursor: pointer;
+      font-weight: 500;
+    }
+    .header-btn:hover {
+      background: #30363d;
     }
     .student-bar {
       background-color: #1f242c;
-      padding: 8px 16px;
+      padding: 8px 14px;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 10px;
       border-bottom: 1px solid #30363d;
     }
@@ -70,17 +76,30 @@
       background: #0d1117;
       border: 1px solid #30363d;
       color: #fff;
-      padding: 8px 12px;
+      padding: 7px 10px;
       border-radius: 6px;
-      font-size: 14px;
+      font-size: 13.5px;
+      outline: none;
+    }
+    .student-bar input:focus {
+      border-color: #58a6ff;
+    }
+    .stats-badge {
+      font-size: 12px;
+      color: #8b949e;
+      white-space: nowrap;
+    }
+    .stats-badge span {
+      color: #58a6ff;
+      font-weight: 600;
     }
     #chat-box {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     .msg-row {
       display: flex;
@@ -95,22 +114,22 @@
       align-self: flex-start;
     }
     .avatar {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 17px;
       flex-shrink: 0;
       background: #21262d;
       border: 1px solid #30363d;
     }
     .msg-content {
-      padding: 12px 16px;
+      padding: 12px 15px;
       border-radius: 12px;
-      font-size: 14.5px;
-      line-height: 1.6;
+      font-size: 14px;
+      line-height: 1.65;
       word-break: break-word;
       width: 100%;
     }
@@ -118,6 +137,7 @@
       background-color: #1f6feb;
       color: #fff;
       border-bottom-right-radius: 2px;
+      font-size: 14.5px;
     }
     .bot-row .msg-content {
       background-color: #21262d;
@@ -125,23 +145,61 @@
       border: 1px solid #30363d;
       border-bottom-left-radius: 2px;
     }
+
+    /* 텍스트 크기 계층화 디자인 */
+    .bot-row .msg-content h1 {
+      font-size: 17.5px;
+      font-weight: 700;
+      color: #58a6ff;
+      margin: 10px 0 6px 0;
+    }
+    .bot-row .msg-content h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #79c0ff;
+      margin: 9px 0 5px 0;
+    }
+    .bot-row .msg-content h3 {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #d2a8ff;
+      margin: 8px 0 4px 0;
+    }
+    .bot-row .msg-content p {
+      font-size: 13.5px;
+      margin-bottom: 6px;
+      color: #e6edf3;
+    }
+    .bot-row .msg-content ul, .bot-row .msg-content ol {
+      margin: 4px 0 6px 18px;
+      font-size: 13.5px;
+    }
+    .bot-row .msg-content li {
+      margin-bottom: 3px;
+    }
+
+    /* 수식 간격 한 칸 띄움 설정 */
+    .katex-display {
+      margin: 8px 0 !important;
+    }
+
     pre {
       background: #161b22;
       border-radius: 8px;
-      padding: 12px;
-      margin: 10px 0;
+      padding: 10px;
+      margin: 8px 0;
       overflow-x: auto;
       border: 1px solid #30363d;
     }
     code {
-      font-family: monospace;
-      font-size: 13px;
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
     }
     .sim-container {
       background: #0d1117;
       border: 1px solid #30363d;
       border-radius: 8px;
-      margin: 12px 0;
+      margin: 10px 0;
       padding: 10px;
       display: flex;
       flex-direction: column;
@@ -149,7 +207,7 @@
     }
     .sim-frame {
       width: 100%;
-      height: 320px;
+      height: 300px;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -168,8 +226,8 @@
     }
     .spinner {
       display: inline-block;
-      width: 16px;
-      height: 16px;
+      width: 15px;
+      height: 15px;
       border: 2px solid rgba(255,255,255,0.3);
       border-radius: 50%;
       border-top-color: #58a6ff;
@@ -206,7 +264,7 @@
       background-color: #238636;
       color: #fff;
       border: none;
-      padding: 0 18px;
+      padding: 0 16px;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
@@ -221,18 +279,26 @@
 
   <header>
     <h1>⚛️ BTMPHYSICSAITUTOR</h1>
-    <button class="header-btn" onclick="resetChat()">대화 초기화</button>
+    <div class="header-actions">
+      <button class="header-btn" onclick="exportHistory()">학습 기록 저장</button>
+      <button class="header-btn" onclick="resetChat()">대화 초기화</button>
+    </div>
   </header>
 
   <div class="student-bar">
-    <label style="font-size: 13px; color: #8b949e; white-space: nowrap;">학생 식별</label>
-    <input type="text" id="studentId" placeholder="예: 20101 홍길동 (학번과 이름)" onchange="saveStudentId()">
+    <input type="text" id="studentId" placeholder="학번과 이름 입력 (예: 20101 홍길동)" onchange="saveStudentId()">
+    <div class="stats-badge">
+      질문: <span id="qCountDisplay">0</span>회 | 점수: <span id="scoreDisplay">0</span>점
+    </div>
   </div>
 
   <div id="chat-box">
     <div class="msg-row bot-row">
       <div class="avatar">👨‍🏫</div>
-      <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념을 질문하거나, '포물선 운동 시뮬레이션 보여줘', '단진자 운동 시각화해줘'와 같이 요청하시면 화면에서 직접 움직이는 물리 시뮬레이터를 띄워드립니다.</div>
+      <div class="msg-content">
+        <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+        <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요.</p>
+      </div>
     </div>
   </div>
 
@@ -252,49 +318,70 @@
     const SYSTEM_INSTRUCTION = `
 당신은 볼츠만물리 학원의 공식 물리 학습 전용 AI 튜터인 btmphysics AI Tutor입니다.
 
-[물리 시뮬레이션 및 시각화 출력 특별 규칙]
-1. 사용자가 시각화, 시뮬레이션, 그래프, 인터랙티브 데모, 움직이는 그림을 요청하면 반드시 실시간 실행 가능한 독립형 HTML/JS/Canvas 코드를 아래 포맷으로 작성하세요:
-\`\`\`html
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-  body { margin: 0; background: #161b22; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-  canvas { background: #0d1117; border: 1px solid #30363d; border-radius: 6px; }
-  .controls { margin-top: 6px; display: flex; gap: 8px; font-size: 12px; }
-  button { background: #238636; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
-</style>
-</head>
-<body>
-  <canvas id="simCanvas" width="340" height="230"></canvas>
-  <div class="controls">
-    <button onclick="resetSim()">다시 시작</button>
-  </div>
-  <script>
-    // 물리 수식 기반 Canvas 2D 애니메이션 코드 작성 (requestAnimationFrame 활용)
-  <\/script>
-</body>
-</html>
-\`\`\`
-
-2. 수식 표현: 모든 수학 공식과 물리 수식은 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
-3. 볼츠만 쌤은 학원 원장 선생님을 의미하며, 물리학자 볼츠만은 통계역학 질문 시에만 설명합니다.
-4. 문장에 강조용 별표 기호는 사용하지 마세요.
+[답변 작성 형식 가이드라인]
+1. 계층적 제목 구성:
+   - 주요 주제나 큰 분류는 # 또는 ## 기호를 사용하여 제목을 명확히 구분하세요.
+   - 세부 소항목은 ### 또는 번호 목록(1., 2.)을 사용하세요.
+   - 일반 설명 본문은 간결하고 명확한 문장으로 서술하세요.
+2. 구분선 금지:
+   - '---' 또는 '===' 같은 텍스트 구분선은 절대 넣지 마세요.
+3. 수식 표현:
+   - 모든 수학 공식과 물리 수식은 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
+   - 수식 위아래로는 과도한 빈 줄을 넣지 말고 자연스럽게 한 줄의 문맥만 유지하세요.
+4. 물리 외 질문 차단:
+   - 타 과목, 일상 잡담 등은 내용을 답변하지 않고 물리 질문을 유도하세요.
+5. 시뮬레이션 요청 시:
+   - 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
+6. 문장에 강조용 별표 기호는 사용하지 마세요.
 `;
 
     let chatHistory = [];
+    let rawChatLogs = [];
     let questionCount = 0;
+    let currentScore = 0;
 
     window.onload = function() {
       const savedId = localStorage.getItem('btm_student_id');
       if (savedId) {
         document.getElementById('studentId').value = savedId;
       }
+      loadLocalHistory();
     };
 
     function saveStudentId() {
       const id = document.getElementById('studentId').value.trim();
       localStorage.setItem('btm_student_id', id);
+    }
+
+    function saveLocalHistory() {
+      localStorage.setItem('btm_chat_history', JSON.stringify(chatHistory));
+      localStorage.setItem('btm_raw_logs', JSON.stringify(rawChatLogs));
+      localStorage.setItem('btm_q_count', questionCount.toString());
+      localStorage.setItem('btm_score', currentScore.toString());
+    }
+
+    function loadLocalHistory() {
+      const savedHistory = localStorage.getItem('btm_chat_history');
+      const savedLogs = localStorage.getItem('btm_raw_logs');
+      const savedCount = localStorage.getItem('btm_q_count');
+      const savedScore = localStorage.getItem('btm_score');
+
+      if (savedHistory && savedLogs) {
+        chatHistory = JSON.parse(savedHistory);
+        rawChatLogs = JSON.parse(savedLogs);
+        questionCount = parseInt(savedCount) || 0;
+        currentScore = parseInt(savedScore) || 0;
+
+        document.getElementById('qCountDisplay').innerText = questionCount;
+        document.getElementById('scoreDisplay').innerText = currentScore;
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = '';
+
+        rawChatLogs.forEach(item => {
+          appendMessageUI(item.sender, item.text);
+        });
+      }
     }
 
     function renderMathAndCode(element) {
@@ -313,14 +400,18 @@
     }
 
     function parseContent(text) {
+      // 1. 구분선 기호(---, ===) 사전 제거
+      let cleanText = text.replace(/^[ \t]*[-=]{3,}[ \t]*$/gm, '');
+
+      // 2. 시뮬레이션 HTML 코드블록 추출 및 처리
       const htmlBlockRegex = /```html\n([\s\S]*?)```/g;
       let match;
       let lastIndex = 0;
       let finalHtml = '';
 
-      while ((match = htmlBlockRegex.exec(text)) !== null) {
-        let beforeText = text.substring(lastIndex, match.index);
-        finalHtml += parseMarkdownSimple(beforeText);
+      while ((match = htmlBlockRegex.exec(cleanText)) !== null) {
+        let beforeText = cleanText.substring(lastIndex, match.index);
+        finalHtml += formatMarkdownText(beforeText);
 
         const codeContent = match[1];
         const blob = new Blob([codeContent], { type: 'text/html' });
@@ -335,19 +426,31 @@
         lastIndex = htmlBlockRegex.lastIndex;
       }
 
-      finalHtml += parseMarkdownSimple(text.substring(lastIndex));
+      finalHtml += formatMarkdownText(cleanText.substring(lastIndex));
       return finalHtml;
     }
 
-    function parseMarkdownSimple(text) {
-      let parsed = text.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+    function formatMarkdownText(text) {
+      let parsed = text;
+
+      // 코드 블록 변환
+      parsed = parsed.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
         return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
       });
+
+      // 제목 태그 계층화 변환
+      parsed = parsed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      parsed = parsed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      parsed = parsed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // 줄바꿈 처리
+      parsed = parsed.replace(/\n\n/g, '<br><br>');
       parsed = parsed.replace(/\n/g, '<br>');
+
       return parsed;
     }
 
-    function appendMessage(sender, text, isLoading = false) {
+    function appendMessageUI(sender, text, isLoading = false) {
       const chatBox = document.getElementById('chat-box');
       const row = document.createElement('div');
       row.className = `msg-row ${sender === 'user' ? 'user-row' : 'bot-row'}`;
@@ -360,7 +463,7 @@
       content.className = 'msg-content';
 
       if (isLoading) {
-        content.innerHTML = '<span class="spinner"></span>답변 및 시뮬레이터를 생성하고 있습니다...';
+        content.innerHTML = '<span class="spinner"></span>답변을 준비하고 있습니다...';
       } else {
         content.innerHTML = parseContent(text);
       }
@@ -378,15 +481,54 @@
     }
 
     function resetChat() {
-      if (confirm("대화 기록을 초기화하시겠습니까?")) {
+      if (confirm("대화 및 학습 기록을 초기화하시겠습니까?")) {
         chatHistory = [];
+        rawChatLogs = [];
+        questionCount = 0;
+        currentScore = 0;
+        localStorage.removeItem('btm_chat_history');
+        localStorage.removeItem('btm_raw_logs');
+        localStorage.removeItem('btm_q_count');
+        localStorage.removeItem('btm_score');
+
+        document.getElementById('qCountDisplay').innerText = '0';
+        document.getElementById('scoreDisplay').innerText = '0';
+
         const chatBox = document.getElementById('chat-box');
         chatBox.innerHTML = `
           <div class="msg-row bot-row">
             <div class="avatar">👨‍🏫</div>
-            <div class="msg-content">안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다. 궁금한 물리 개념을 질문하거나 시뮬레이션을 요청해 주세요.</div>
+            <div class="msg-content">
+              <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+              <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요.</p>
+            </div>
           </div>`;
       }
+    }
+
+    function exportHistory() {
+      const studentName = document.getElementById('studentId').value.trim() || "학생";
+      if (rawChatLogs.length === 0) {
+        alert("저장할 대화 내역이 없습니다.");
+        return;
+      }
+
+      let content = `[BTMPHYSICS 학습 질의응답 기록]\n`;
+      content += `학생 식별: ${studentName}\n`;
+      content += `질문 횟수: ${questionCount}회 | 참여 점수: ${currentScore}점\n`;
+      content += `저장 일시: ${new Date().toLocaleString()}\n`;
+      content += `=========================================\n\n`;
+
+      rawChatLogs.forEach((item, idx) => {
+        const role = item.sender === 'user' ? '학생 질문' : '튜터 답변';
+        content += `[${role}]\n${item.text}\n\n-----------------------------------------\n\n`;
+      });
+
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `물리학습기록_${studentName}_${new Date().toISOString().slice(0,10)}.txt`;
+      link.click();
     }
 
     async function handleSend() {
@@ -400,11 +542,13 @@
       if (!question) return;
 
       saveStudentId();
-      appendMessage('user', question);
+      appendMessageUI('user', question);
+      rawChatLogs.push({ sender: 'user', text: question });
+
       qInput.value = '';
       sendBtn.disabled = true;
 
-      const loadingElement = appendMessage('bot', '', true);
+      const loadingElement = appendMessageUI('bot', '', true);
 
       chatHistory.push({ role: "user", parts: [{ text: question }] });
       questionCount++;
@@ -432,12 +576,18 @@
         renderMathAndCode(loadingElement);
 
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
+        rawChatLogs.push({ sender: 'bot', text: botReply });
 
+        // 학습 참여도 점수 계산
         const lenScore = Math.min(question.length * 2, 40);
         const countScore = Math.min(questionCount * 15, 60);
-        const totalScore = Math.min(lenScore + countScore, 100);
+        currentScore = Math.min(lenScore + countScore, 100);
 
-        logToGoogleSheet(studentName, question, botReply, totalScore);
+        document.getElementById('qCountDisplay').innerText = questionCount;
+        document.getElementById('scoreDisplay').innerText = currentScore;
+
+        saveLocalHistory();
+        logToGoogleSheet(studentName, question, botReply, currentScore);
       } catch (err) {
         loadingElement.innerText = "통신 오류: " + err.message;
       } finally {
