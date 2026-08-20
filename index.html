@@ -688,4 +688,248 @@
     function formatMarkdownText(text) {
       let parsed = text;
 
-      parsed = parsed.replace(/```([a-zA-Z]*)\n([\s\S]*?)
+      parsed = parsed.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, function(match, lang, code) {
+        return `<pre><code class="language-${lang}">${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></pre>`;
+      });
+
+      parsed = parsed.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      parsed = parsed.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      parsed = parsed.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      parsed = parsed.replace(/\n\n/g, '<br><br>');
+      parsed = parsed.replace(/\n/g, '<br>');
+
+      return parsed;
+    }
+
+    function appendMessageUI(sender, text, isLoading = false) {
+      const chatBox = document.getElementById('chat-box');
+      const row = document.createElement('div');
+      row.className = `msg-row ${sender === 'user' ? 'user-row' : 'bot-row'}`;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      avatar.innerText = sender === 'user' ? '🧑‍🎓' : '👨‍🏫';
+
+      const content = document.createElement('div');
+      content.className = 'msg-content';
+
+      if (isLoading) {
+        content.innerHTML = '<span class="spinner"></span>답변을 준비하고 있습니다...';
+      } else {
+        content.innerHTML = parseContent(text);
+      }
+
+      row.appendChild(avatar);
+      row.appendChild(content);
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      if (!isLoading) {
+        renderMathAndCode(content);
+      }
+
+      return content;
+    }
+
+    function openResetModal() {
+      showAlert("대화 초기화", "지금까지의 대화와 학습 기록을 초기화하시겠습니까?", function() {
+        chatHistory = [];
+        rawChatLogs = [];
+        questionCount = 0;
+        currentScore = 0;
+        localStorage.removeItem('btm_chat_history');
+        localStorage.removeItem('btm_raw_logs');
+        localStorage.removeItem('btm_q_count');
+        localStorage.removeItem('btm_score');
+
+        document.getElementById('qCountDisplay').innerText = '0';
+        document.getElementById('scoreDisplay').innerText = '0';
+
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = `
+          <div class="msg-row bot-row">
+            <div class="avatar">👨‍🏫</div>
+            <div class="msg-content">
+              <p>안녕하세요. 볼츠만물리 학원의 공식 물리 학습 튜터입니다.</p>
+              <p>궁금한 물리 개념을 질문하거나 문제 풀이 및 시뮬레이션을 요청해 주세요.</p>
+            </div>
+          </div>`;
+      });
+    }
+
+    function openReportModal() {
+      const studentInput = document.getElementById('studentId');
+      const studentName = studentInput.value.trim() || "미등록 학생";
+
+      participationRate = Math.min(questionCount * 20, 100);
+      sincerityRate = questionCount > 0 ? Math.min(Math.round((currentScore / (questionCount * 20)) * 100), 100) : 0;
+      understandingRate = questionCount > 0 ? Math.min(Math.round((participationRate * 0.4) + (sincerityRate * 0.6)), 100) : 0;
+
+      document.getElementById('modalStudentName').innerText = studentName;
+      document.getElementById('modalQCount').innerText = `${questionCount} 회`;
+      document.getElementById('modalTotalScore').innerText = `${currentScore} 점`;
+
+      document.getElementById('modalParticipationVal').innerText = `${participationRate}%`;
+      document.getElementById('modalParticipationBar').style.width = `${participationRate}%`;
+
+      document.getElementById('modalSincerityVal').innerText = `${sincerityRate}%`;
+      document.getElementById('modalSincerityBar').style.width = `${sincerityRate}%`;
+
+      document.getElementById('modalUnderstandingVal').innerText = `${understandingRate}%`;
+      document.getElementById('modalUnderstandingBar').style.width = `${understandingRate}%`;
+
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function exportToNotionMarkdown() {
+      const studentName = document.getElementById('studentId').value.trim() || "학생";
+      if (rawChatLogs.length === 0) {
+        showAlert("알림", "저장할 대화 내역이 없습니다.");
+        return;
+      }
+
+      let md = `# ⚛️ BTMPHYSICS AI TUTOR 학습 활동 보고서\n\n`;
+      md += `> **학생 식별:** ${studentName}\n`;
+      md += `> **학습 일시:** ${new Date().toLocaleString()}\n`;
+      md += `> **종합 학습 점수:** ${currentScore} / 100 점\n\n`;
+
+      md += `## 📊 학습 성취도 지표\n\n`;
+      md += `| 항목 | 수치 | 평가 수준 |\n`;
+      md += `| :--- | :--- | :--- |\n`;
+      md += `| **총 질문 수** | ${questionCount}회 | ${questionCount >= 5 ? '매우 우수' : '보통'} |\n`;
+      md += `| **학습 참여도** | ${participationRate}% | ${participationRate >= 80 ? '적극적 참여' : '기본 참여'} |\n`;
+      md += `| **학습 성실도** | ${sincerityRate}% | ${sincerityRate >= 80 ? '심화 질문 중심' : '일반 질문'} |\n`;
+      md += `| **개념 이해도** | ${understandingRate}% | ${understandingRate >= 80 ? '개념 습득 우수' : '학습 진행 중'} |\n\n`;
+
+      md += `## 💬 상세 질의응답 내역\n\n`;
+
+      rawChatLogs.forEach((item, idx) => {
+        if (item.sender === 'user') {
+          md += `### 🧑‍🎓 질문 ${Math.floor(idx / 2) + 1}\n\n`;
+          md += `${item.text}\n\n`;
+        } else {
+          md += `### 👨‍🏫 볼츠만물리 AI 튜터 답변\n\n`;
+          md += `${item.text}\n\n`;
+        }
+      });
+
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `물리학습기록_${studentName}_${new Date().toISOString().slice(0,10)}.md`;
+      link.click();
+      closeReportModal();
+    }
+
+    async function handleSend() {
+      const qInput = document.getElementById('questionInput');
+      const studentInput = document.getElementById('studentId');
+      const sendBtn = document.getElementById('sendBtn');
+
+      const studentName = studentInput.value.trim();
+
+      if (!studentName) {
+        showAlert("학습 시작 안내", "질문을 시작하기 전에 상단에 [학번과 이름]을 먼저 입력해 주세요.");
+        studentInput.classList.add('input-alert');
+        studentInput.focus();
+        return;
+      }
+
+      const question = qInput.value.trim();
+      if (!question) return;
+
+      saveStudentId();
+      appendMessageUI('user', question);
+      rawChatLogs.push({ sender: 'user', text: question });
+
+      qInput.value = '';
+      sendBtn.disabled = true;
+
+      const loadingElement = appendMessageUI('bot', '', true);
+
+      chatHistory.push({ role: "user", parts: [{ text: question }] });
+      questionCount++;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION + lectureKnowledgeBase }] },
+            contents: chatHistory
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          loadingElement.innerText = "API 오류: " + data.error.message;
+          return;
+        }
+
+        const botReply = data.candidates?.[0]?.content?.parts?.[0]?.text || "답변을 불러오지 못했습니다.";
+        loadingElement.innerHTML = parseContent(botReply);
+        renderMathAndCode(loadingElement);
+
+        chatHistory.push({ role: "model", parts: [{ text: botReply }] });
+        rawChatLogs.push({ sender: 'bot', text: botReply });
+
+        const lenScore = Math.min(question.length * 2, 40);
+        const countScore = Math.min(questionCount * 15, 60);
+        currentScore = Math.min(lenScore + countScore, 100);
+
+        document.getElementById('qCountDisplay').innerText = questionCount;
+        document.getElementById('scoreDisplay').innerText = currentScore;
+
+        saveLocalHistory();
+        logToGoogleSheet(studentName, question, botReply, currentScore);
+      } catch (err) {
+        loadingElement.innerText = "통신 오류: " + err.message;
+      } finally {
+        sendBtn.disabled = false;
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+      }
+    }
+
+    function logToGoogleSheet(studentId, question, answer, score) {
+      const now = new Date();
+      const timeString = now.getFullYear() + "-" + 
+                         String(now.getMonth() + 1).padStart(2, '0') + "-" + 
+                         String(now.getDate()).padStart(2, '0') + " " + 
+                         String(now.getHours()).padStart(2, '0') + ":" + 
+                         String(now.getMinutes()).padStart(2, '0') + ":" + 
+                         String(now.getSeconds()).padStart(2, '0');
+
+      const payload = {
+        일시: timeString,
+        학번이름: studentId,
+        질문내용: question,
+        AI답변요약: answer.substring(0, 150),
+        참여도: `${Math.min(questionCount * 20, 100)}%`,
+        성실도: "100%",
+        점수: score
+      };
+
+      fetch(WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    }
+
+    document.getElementById('questionInput').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSend();
+      }
+    });
+  </script>
+</body>
+</html>
