@@ -1,20 +1,16 @@
 {
   "name": "BTMPHYSICSAITUTOR",
   "short_name": "볼츠만물리",
-  "start_url": "/",
+  "start_url": "/?v=2",
   "display": "standalone",
   "background_color": "#0e1117",
   "theme_color": "#161b22",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3254/3254099.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/3254/3254099.png",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
