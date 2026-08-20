@@ -263,7 +263,7 @@
       font-size: 12.5px;
     }
 
-    /* 시뮬레이터 컨테이너 (스크롤바 완전 제거 및 자동 반응형 높이) */
+    /* 시뮬레이터 컨테이너 */
     .sim-container {
       width: 100%;
       background: #0d1117;
@@ -278,9 +278,9 @@
     }
     .sim-frame {
       width: 100%;
-      height: 330px;
-      min-height: 260px;
-      max-height: 520px;
+      height: 380px;
+      min-height: 280px;
+      max-height: 600px;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -683,15 +683,56 @@
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시뮬레이터 및 컨트롤 바 UI 규칙: 라벨 깨짐/줄바꿈 방지]
+[시뮬레이터 및 컨트롤 바 UI 규칙: 상하 2단 구조 엄수]
 1. 회로도, 그래프, 자유물체도, 운동 궤적 등 모든 물리 도해를 설명할 때 아스키 아트(ASCII text art)는 절대 금지합니다.
 2. 인터랙티브 시뮬레이션 및 도해는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-3. 컨트롤 바(슬라이더) UI 작성 시 라벨이 줄바꿈되어 깨지지 않도록 아래 구조를 엄격히 준수하세요:
-   - 각 컨트롤 항목 컨테이너: display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; background: #21262d; border-radius: 6px; margin: 3px 0; width: 100%; max-width: 440px; box-sizing: border-box;
-   - 라벨 태그(label 또는 span): white-space: nowrap; font-size: 12.5px; color: #c9d1d9; display: inline-flex; align-items: center; gap: 4px;
-   - 수식 텍스트와 기호는 별도 줄바꿈 없이 하나의 라벨 안에 '파장($\\lambda$)' 또는 '굴절률($n$)' 형태로 밀착해서 작성하세요.
-   - 실시간 수치 표시(span): min-width: 60px; text-align: right; font-family: monospace; color: #58a6ff; font-weight: bold; font-size: 12.5px;
-   - input[type="range"]: flex: 1; margin: 0 8px; accent-color: #1f6feb; cursor: pointer;
+3. 모바일 화면에서 슬라이더와 텍스트가 겹치거나 잘리지 않도록 컨트롤 항목은 반드시 [상단: 텍스트 및 수치] / [하단: 슬라이더 바 100%] 상하 2단 구조로 작성하세요:
+\`\`\`html
+<div class="control-box">
+  <div class="ctrl-row">
+    <span class="ctrl-label">파장 ($$\\lambda$$)</span>
+    <span class="ctrl-val" id="lambdaVal">620 nm</span>
+  </div>
+  <input type="range" id="lambdaInput" min="400" max="750" value="620" oninput="updateSim()">
+</div>
+\`\`\`
+- 컨트롤 박스 CSS 권장 스타일:
+\`\`\`css
+.control-box {
+  width: 100%;
+  max-width: 440px;
+  background: #21262d;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ctrl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+.ctrl-label {
+  font-size: 13px;
+  color: #c9d1d9;
+  white-space: nowrap;
+}
+.ctrl-val {
+  font-size: 13px;
+  font-weight: bold;
+  color: #58a6ff;
+  font-family: monospace;
+}
+input[type="range"] {
+  width: 100%;
+  margin: 2px 0;
+  accent-color: #1f6feb;
+  cursor: pointer;
+}
+\`\`\`
 `;
 
     let lectureKnowledgeBase = "";
@@ -763,7 +804,7 @@
       if (e.data && e.data.type === 'resize-sim' && e.data.frameId) {
         const frame = document.getElementById(e.data.frameId);
         if (frame && e.data.height) {
-          frame.style.height = (e.data.height + 6) + 'px';
+          frame.style.height = (e.data.height + 8) + 'px';
         }
       }
     });
@@ -893,7 +934,7 @@
       });
     }
 
-    // 시뮬레이터 내부 스타일 보정 및 KaTeX 인라인 수식 줄바꿈 방지 렌더러
+    // 모바일 전용 상하 2단 강제 적용 및 KaTeX 밀착 렌더러
     function injectKaTeXToSimulation(rawCode, frameId) {
       const closeScript = '<' + '/script>';
       const katexInjection = 
@@ -901,9 +942,12 @@
         '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">' + closeScript + '\n' +
         '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">' + closeScript + '\n' +
         '<style>\n' +
-        '  html, body { overflow: hidden !important; margin: 0; padding: 4px; box-sizing: border-box; }\n' +
-        '  .katex { font-size: 1.0em !important; }\n' +
-        '  label, .control-label, span { white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 3px !important; }\n' +
+        '  html, body { overflow: hidden !important; margin: 0; padding: 4px; box-sizing: border-box; width: 100%; }\n' +
+        '  .katex { font-size: 1.02em !important; }\n' +
+        '  .control-box, .control-item, .ctrl-item, .slider-container { display: flex !important; flex-direction: column !important; width: 100% !important; max-width: 440px !important; margin: 4px 0 !important; background: #21262d !important; border-radius: 6px !important; padding: 6px 10px !important; box-sizing: border-box !important; }\n' +
+        '  .ctrl-row, .label-row, .slider-header { display: flex !important; justify-content: space-between !important; align-items: center !important; width: 100% !important; margin-bottom: 2px !important; }\n' +
+        '  label, .ctrl-label, .slider-label { white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 4px !important; font-size: 13px !important; color: #c9d1d9 !important; }\n' +
+        '  input[type="range"] { width: 100% !important; margin: 4px 0 2px 0 !important; accent-color: #1f6feb !important; cursor: pointer !important; }\n' +
         '</style>\n' +
         '<script>\n' +
         '  function renderSimMath() {\n' +
@@ -918,7 +962,7 @@
         '    }\n' +
         '  }\n' +
         '  function notifyHeight() {\n' +
-        '    var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, 260);\n' +
+        '    var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, 280);\n' +
         '    window.parent.postMessage({ type: "resize-sim", frameId: "' + frameId + '", height: h }, "*");\n' +
         '  }\n' +
         '  window.addEventListener("DOMContentLoaded", function() { renderSimMath(); notifyHeight(); });\n' +
@@ -1135,25 +1179,20 @@
       });
     }
 
-    /* 100회 완주 비례 선형 누적 지표 산출 계산기 */
     function calculateMetrics() {
       if (questionCount === 0) {
         return { part: 0, sinc: 0, und: 0, score: 0 };
       }
 
-      // 1. 참여도: 질문 100회 도달 시 100% (1회당 정확히 1% 누적)
       const part = Math.min(questionCount, 100);
 
-      // 2. 성실도: 누적 질문수(최대 80%) + 평균 질문 길이(최대 20%)
       const avgLen = totalInputLength / questionCount;
       const lenBonus = Math.min(avgLen / 50, 1.0) * 20;
       const countPart = Math.min(questionCount / 100, 1.0) * 80;
       const sinc = Math.min(Math.round(countPart + lenBonus), 100);
 
-      // 3. 이해도: 참여도 45% + 성실도 45% + 회차 보정 10%
       const und = Math.min(Math.round((part * 0.45) + (sinc * 0.45) + (Math.min(questionCount, 100) * 0.1)), 100);
 
-      // 4. 종합 점수: 100회 기준 종합 학업 성취도
       const score = Math.min(Math.round((part * 0.4) + (sinc * 0.3) + (und * 0.3)), 100);
 
       return { part, sinc, und, score };
@@ -1333,7 +1372,6 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
-        // 100회 기준 누적 점수 동기화
         const metrics = calculateMetrics();
         currentScore = metrics.score;
         participationRate = metrics.part;
