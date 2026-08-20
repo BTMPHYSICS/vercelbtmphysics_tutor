@@ -280,7 +280,7 @@
       width: 100%;
       height: 330px;
       min-height: 260px;
-      max-height: 480px;
+      max-height: 520px;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -683,13 +683,15 @@
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시각 자료 및 시뮬레이터 규칙: 스크롤바 없는 뷰포트 밀착형 작성]
-1. 회로도, 그래프, 자유물체도(힘의 분력도), 광선 추적도, 운동 궤적 등 모든 물리 도해를 설명할 때 문자 기호로 그린 아스키 아트(ASCII text art)는 절대 출력하지 마세요.
-2. 도해, 그래프, 물리 그림, 시뮬레이션을 요청받거나 시각적 설명이 필요할 때는 반드시 브라우저에서 선명하게 렌더링되는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-3. 시뮬레이터 HTML 작성 시:
-   - body에 margin:0; padding:4px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; width:100%; box-sizing:border-box; 적용.
-   - canvas는 width="460" height="230" 스타일에 max-width:100%; height:auto; display:block; 적용.
-   - controls 영역은 margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; align-items:center; 적용.
+[시뮬레이터 및 컨트롤 바 UI 규칙: 라벨 깨짐/줄바꿈 방지]
+1. 회로도, 그래프, 자유물체도, 운동 궤적 등 모든 물리 도해를 설명할 때 아스키 아트(ASCII text art)는 절대 금지합니다.
+2. 인터랙티브 시뮬레이션 및 도해는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
+3. 컨트롤 바(슬라이더) UI 작성 시 라벨이 줄바꿈되어 깨지지 않도록 아래 구조를 엄격히 준수하세요:
+   - 각 컨트롤 항목 컨테이너: display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 8px; background: #21262d; border-radius: 6px; margin: 3px 0; width: 100%; max-width: 440px; box-sizing: border-box;
+   - 라벨 태그(label 또는 span): white-space: nowrap; font-size: 12.5px; color: #c9d1d9; display: inline-flex; align-items: center; gap: 4px;
+   - 수식 텍스트와 기호는 별도 줄바꿈 없이 하나의 라벨 안에 '파장($\\lambda$)' 또는 '굴절률($n$)' 형태로 밀착해서 작성하세요.
+   - 실시간 수치 표시(span): min-width: 60px; text-align: right; font-family: monospace; color: #58a6ff; font-weight: bold; font-size: 12.5px;
+   - input[type="range"]: flex: 1; margin: 0 8px; accent-color: #1f6feb; cursor: pointer;
 `;
 
     let lectureKnowledgeBase = "";
@@ -761,7 +763,7 @@
       if (e.data && e.data.type === 'resize-sim' && e.data.frameId) {
         const frame = document.getElementById(e.data.frameId);
         if (frame && e.data.height) {
-          frame.style.height = (e.data.height + 4) + 'px';
+          frame.style.height = (e.data.height + 6) + 'px';
         }
       }
     });
@@ -891,7 +893,7 @@
       });
     }
 
-    // 시뮬레이터 내부 세로 스크롤 방지 + 높이 자동 측정 + KaTeX 완벽 렌더링 주입기
+    // 시뮬레이터 내부 스타일 보정 및 KaTeX 인라인 수식 줄바꿈 방지 렌더러
     function injectKaTeXToSimulation(rawCode, frameId) {
       const closeScript = '<' + '/script>';
       const katexInjection = 
@@ -900,6 +902,8 @@
         '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">' + closeScript + '\n' +
         '<style>\n' +
         '  html, body { overflow: hidden !important; margin: 0; padding: 4px; box-sizing: border-box; }\n' +
+        '  .katex { font-size: 1.0em !important; }\n' +
+        '  label, .control-label, span { white-space: nowrap !important; display: inline-flex !important; align-items: center !important; gap: 3px !important; }\n' +
         '</style>\n' +
         '<script>\n' +
         '  function renderSimMath() {\n' +
