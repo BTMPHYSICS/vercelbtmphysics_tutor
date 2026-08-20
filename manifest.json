@@ -1,7 +1,7 @@
 {
-  "name": "BTMPHYSICSAITUTOR",
-  "short_name": "볼츠만물리",
-  "start_url": "/?v=2",
+  "name": "BTMPHYSICS-AI-TUTOR",
+  "short_name": "BTMPHYSICS-AI-TUTOR",
+  "start_url": "/?v=3",
   "display": "standalone",
   "background_color": "#0e1117",
   "theme_color": "#161b22",
