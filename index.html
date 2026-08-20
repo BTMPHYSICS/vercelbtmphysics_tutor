@@ -263,6 +263,7 @@
       font-size: 12.5px;
     }
 
+    /* 시뮬레이터 컨테이너 (스크롤바 완전 제거 및 자동 반응형 높이) */
     .sim-container {
       width: 100%;
       background: #0d1117;
@@ -272,12 +273,14 @@
       padding: 8px;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       overflow: hidden;
     }
     .sim-frame {
       width: 100%;
-      height: 410px;
+      height: 330px;
+      min-height: 260px;
+      max-height: 480px;
       border: none;
       border-radius: 6px;
       background: #161b22;
@@ -680,10 +683,13 @@
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시각 자료, 도해 및 시뮬레이션 규칙: 아스키(ASCII) 텍스트 그림 절대 금지]
+[시각 자료 및 시뮬레이터 규칙: 스크롤바 없는 뷰포트 밀착형 작성]
 1. 회로도, 그래프, 자유물체도(힘의 분력도), 광선 추적도, 운동 궤적 등 모든 물리 도해를 설명할 때 문자 기호로 그린 아스키 아트(ASCII text art)는 절대 출력하지 마세요.
 2. 도해, 그래프, 물리 그림, 시뮬레이션을 요청받거나 시각적 설명이 필요할 때는 반드시 브라우저에서 선명하게 렌더링되는 독립형 HTML/SVG/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-3. 시뮬레이터 내부의 물리량 수치(속도, 주기, 가속도, 힘 등)나 라벨 설명에 인라인 수식($...$)을 적극 활용하세요.
+3. 시뮬레이터 HTML 작성 시:
+   - body에 margin:0; padding:4px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; width:100%; box-sizing:border-box; 적용.
+   - canvas는 width="460" height="230" 스타일에 max-width:100%; height:auto; display:block; 적용.
+   - controls 영역은 margin-top:6px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; align-items:center; 적용.
 `;
 
     let lectureKnowledgeBase = "";
@@ -749,6 +755,16 @@
       loadLocalHistory();
       loadLectureData();
     };
+
+    // iframe 높이 자동 동기화 수신
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'resize-sim' && e.data.frameId) {
+        const frame = document.getElementById(e.data.frameId);
+        if (frame && e.data.height) {
+          frame.style.height = (e.data.height + 4) + 'px';
+        }
+      }
+    });
 
     function clearInputAlert() {
       const input = document.getElementById('studentId');
@@ -875,13 +891,16 @@
       });
     }
 
-    // HTML 내부 스크립트 충돌 방지 KaTeX 주입 함수
-    function injectKaTeXToSimulation(rawCode) {
+    // 시뮬레이터 내부 세로 스크롤 방지 + 높이 자동 측정 + KaTeX 완벽 렌더링 주입기
+    function injectKaTeXToSimulation(rawCode, frameId) {
       const closeScript = '<' + '/script>';
       const katexInjection = 
         '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">\n' +
         '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js">' + closeScript + '\n' +
         '<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js">' + closeScript + '\n' +
+        '<style>\n' +
+        '  html, body { overflow: hidden !important; margin: 0; padding: 4px; box-sizing: border-box; }\n' +
+        '</style>\n' +
         '<script>\n' +
         '  function renderSimMath() {\n' +
         '    if (window.renderMathInElement) {\n' +
@@ -894,12 +913,17 @@
         '      });\n' +
         '    }\n' +
         '  }\n' +
-        '  window.addEventListener("DOMContentLoaded", renderSimMath);\n' +
+        '  function notifyHeight() {\n' +
+        '    var h = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight, 260);\n' +
+        '    window.parent.postMessage({ type: "resize-sim", frameId: "' + frameId + '", height: h }, "*");\n' +
+        '  }\n' +
+        '  window.addEventListener("DOMContentLoaded", function() { renderSimMath(); notifyHeight(); });\n' +
         '  window.addEventListener("load", function() {\n' +
-        '    renderSimMath();\n' +
-        '    setTimeout(renderSimMath, 200);\n' +
-        '    setTimeout(renderSimMath, 700);\n' +
+        '    renderSimMath(); notifyHeight();\n' +
+        '    setTimeout(function() { renderSimMath(); notifyHeight(); }, 150);\n' +
+        '    setTimeout(function() { renderSimMath(); notifyHeight(); }, 500);\n' +
         '  });\n' +
+        '  window.addEventListener("resize", notifyHeight);\n' +
         closeScript + '\n';
 
       if (rawCode.includes('<head>')) {
@@ -911,6 +935,7 @@
       }
     }
 
+    let simFrameCounter = 0;
     function parseContent(text) {
       let cleanText = text.replace(/^[ \t]*[-=]{3,}[ \t]*$/gm, '');
 
@@ -923,15 +948,16 @@
         let beforeText = cleanText.substring(lastIndex, match.index);
         finalHtml += formatMarkdownText(beforeText);
 
+        const frameId = 'sim_frame_' + (++simFrameCounter);
         const codeContent = match[1];
-        const enhancedCode = injectKaTeXToSimulation(codeContent);
+        const enhancedCode = injectKaTeXToSimulation(codeContent, frameId);
         const blob = new Blob([enhancedCode], { type: 'text/html;charset=utf-8' });
         const blobUrl = URL.createObjectURL(blob);
 
         finalHtml += `
           <div class="sim-container">
             <button class="sim-toggle-btn" onclick="this.nextElementSibling.src='${blobUrl}'">↻ 인터랙티브 물리 시각화</button>
-            <iframe class="sim-frame" src="${blobUrl}"></iframe>
+            <iframe id="${frameId}" class="sim-frame" src="${blobUrl}" scrolling="no"></iframe>
           </div>
         `;
         lastIndex = htmlBlockRegex.lastIndex;
@@ -1105,20 +1131,25 @@
       });
     }
 
+    /* 100회 완주 비례 선형 누적 지표 산출 계산기 */
     function calculateMetrics() {
       if (questionCount === 0) {
         return { part: 0, sinc: 0, und: 0, score: 0 };
       }
 
+      // 1. 참여도: 질문 100회 도달 시 100% (1회당 정확히 1% 누적)
       const part = Math.min(questionCount, 100);
 
+      // 2. 성실도: 누적 질문수(최대 80%) + 평균 질문 길이(최대 20%)
       const avgLen = totalInputLength / questionCount;
       const lenBonus = Math.min(avgLen / 50, 1.0) * 20;
       const countPart = Math.min(questionCount / 100, 1.0) * 80;
       const sinc = Math.min(Math.round(countPart + lenBonus), 100);
 
+      // 3. 이해도: 참여도 45% + 성실도 45% + 회차 보정 10%
       const und = Math.min(Math.round((part * 0.45) + (sinc * 0.45) + (Math.min(questionCount, 100) * 0.1)), 100);
 
+      // 4. 종합 점수: 100회 기준 종합 학업 성취도
       const score = Math.min(Math.round((part * 0.4) + (sinc * 0.3) + (und * 0.3)), 100);
 
       return { part, sinc, und, score };
@@ -1298,6 +1329,7 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
+        // 100회 기준 누적 점수 동기화
         const metrics = calculateMetrics();
         currentScore = metrics.score;
         participationRate = metrics.part;
