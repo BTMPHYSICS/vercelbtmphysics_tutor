@@ -12,16 +12,13 @@
   <meta name="application-name" content="BTMPHYSICS-AI-TUTOR">
   <link rel="manifest" href="manifest.json?v=3">
 
-  <!-- 네온 아톰 물리 전용 아이콘 -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
 
-  <!-- KaTeX 수식 렌더링 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- 코드 하이라이팅 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
@@ -296,6 +293,7 @@
       cursor: pointer;
       margin-bottom: 8px;
       align-self: flex-start;
+      letter-spacing: -0.2px;
     }
 
     .spinner {
@@ -936,7 +934,7 @@
 
         finalHtml += `
           <div class="sim-container">
-            <button class="sim-toggle-btn" onclick="this.nextElementSibling.src='${blobUrl}'">▶ 실시간 물리 시뮬레이터 재생</button>
+            <button class="sim-toggle-btn" onclick="this.nextElementSibling.src='${blobUrl}'">↻ 인터랙티브 물리 시각화</button>
             <iframe class="sim-frame" src="${blobUrl}"></iframe>
           </div>
         `;
@@ -1111,21 +1109,34 @@
       });
     }
 
+    function calculateMetrics() {
+      if (questionCount === 0) {
+        return { part: 0, sinc: 0, und: 0, score: 0 };
+      }
+
+      const part = Math.min(Math.round(questionCount * 4.5), 100);
+
+      const avgLen = totalInputLength / questionCount;
+      const lenFactor = Math.min(avgLen / 40, 1.0);
+      const countFactor = Math.min(questionCount / 18, 1.0);
+      const sinc = Math.min(Math.round(15 + (lenFactor * 50) + (countFactor * 35)), 100);
+
+      const und = Math.min(Math.round((part * 0.45) + (sinc * 0.35) + (Math.min(questionCount, 20) * 1.0)), 100);
+
+      const score = Math.min(Math.round((part * 0.35) + (sinc * 0.35) + (und * 0.3)), 100);
+
+      return { part, sinc, und, score };
+    }
+
     function openReportModal() {
       const studentInput = document.getElementById('studentId');
       const studentName = studentInput.value.trim() || "미등록 학생";
 
-      if (questionCount === 0) {
-        participationRate = 0;
-        sincerityRate = 0;
-        understandingRate = 0;
-      } else {
-        participationRate = Math.min(Math.round(questionCount * 12), 100);
-        const avgLength = totalInputLength / questionCount;
-        sincerityRate = Math.min(Math.round(avgLength * 2.8), 100);
-        sincerityRate = Math.max(sincerityRate, 25);
-        understandingRate = Math.min(Math.round((participationRate * 0.5) + (sincerityRate * 0.3) + (questionCount * 2)), 100);
-      }
+      const metrics = calculateMetrics();
+      participationRate = metrics.part;
+      sincerityRate = metrics.sinc;
+      understandingRate = metrics.und;
+      currentScore = metrics.score;
 
       document.getElementById('modalStudentName').innerText = studentName;
       document.getElementById('modalQCount').innerText = `${questionCount} 회`;
@@ -1154,18 +1165,20 @@
         return;
       }
 
+      const metrics = calculateMetrics();
+
       let md = `# ⚛️ BTMPHYSICS-AI-TUTOR 학습 활동 보고서\n\n`;
       md += `> 학생 식별: ${studentName}\n`;
       md += `> 학습 일시: ${new Date().toLocaleString()}\n`;
-      md += `> 종합 학습 점수: ${currentScore} / 100 점\n\n`;
+      md += `> 종합 학습 점수: ${metrics.score} / 100 점\n\n`;
 
       md += `## 📊 학습 성취도 지표\n\n`;
       md += `| 항목 | 수치 | 평가 수준 |\n`;
       md += `| :--- | :--- | :--- |\n`;
-      md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 6 ? '매우 우수' : '학습 진행 중'} |\n`;
-      md += `| 학습 참여도 | ${participationRate}% | ${participationRate >= 70 ? '적극적 참여' : '기본 참여'} |\n`;
-      md += `| 학습 성실도 | ${sincerityRate}% | ${sincerityRate >= 70 ? '심화 질문 중심' : '일반 질문'} |\n`;
-      md += `| 개념 이해도 | ${understandingRate}% | ${understandingRate >= 70 ? '개념 습득 우수' : '기본 개념 탐색'} |\n\n`;
+      md += `| 총 질문 수 | ${questionCount}회 | ${questionCount >= 15 ? '매우 우수' : (questionCount >= 8 ? '우수' : '기초 학습 중')} |\n`;
+      md += `| 학습 참여도 | ${metrics.part}% | ${metrics.part >= 75 ? '적극적 참여' : (metrics.part >= 40 ? '보통 참여' : '초기 탐색')} |\n`;
+      md += `| 학습 성실도 | ${metrics.sinc}% | ${metrics.sinc >= 75 ? '심화 질문 중심' : '일반 질문'} |\n`;
+      md += `| 개념 이해도 | ${metrics.und}% | ${metrics.und >= 75 ? '개념 습득 우수' : '개념 정립 진행 중'} |\n\n`;
 
       md += `## 💬 상세 질의응답 내역\n\n`;
 
@@ -1251,7 +1264,7 @@
 
       chatHistory.push({ role: "user", parts: userParts });
       questionCount++;
-      totalInputLength += (question.length + (currentImgBase64 ? 25 : 0));
+      totalInputLength += (question.length + (currentImgBase64 ? 30 : 0));
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -1289,9 +1302,11 @@
         chatHistory.push({ role: "model", parts: [{ text: botReply }] });
         rawChatLogs.push({ sender: 'bot', text: botReply });
 
-        const qScore = questionCount * 7;
-        const lenBonus = Math.min(Math.round(totalInputLength * 0.2), 30);
-        currentScore = Math.min(qScore + lenBonus, 100);
+        const metrics = calculateMetrics();
+        currentScore = metrics.score;
+        participationRate = metrics.part;
+        sincerityRate = metrics.sinc;
+        understandingRate = metrics.und;
 
         document.getElementById('qCountDisplay').innerText = questionCount;
         document.getElementById('scoreDisplay').innerText = currentScore;
@@ -1316,13 +1331,15 @@
                          String(now.getMinutes()).padStart(2, '0') + ":" + 
                          String(now.getSeconds()).padStart(2, '0');
 
+      const metrics = calculateMetrics();
+
       const payload = {
         일시: timeString,
         학번이름: studentId,
         질문내용: question,
         AI답변요약: answer.substring(0, 150),
-        참여도: `${Math.min(questionCount * 12, 100)}%`,
-        성실도: "100%",
+        참여도: `${metrics.part}%`,
+        성실도: `${metrics.sinc}%`,
         점수: score
       };
 
