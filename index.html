@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>BTMPHYSICSAITUTOR</title>
+  <title>BTMPHYSICS-AI-TUTOR</title>
   
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="BTMPHYSICSAITUTOR">
-  <meta name="application-name" content="BTMPHYSICSAITUTOR">
-  <link rel="manifest" href="manifest.json?v=2">
+  <meta name="apple-mobile-web-app-title" content="BTMPHYSICS-AI-TUTOR">
+  <meta name="application-name" content="BTMPHYSICS-AI-TUTOR">
+  <link rel="manifest" href="manifest.json?v=3">
 
-  <!-- 네온 아톰 물리 전용 아이콘 (외부 통신 없이 즉시 로드) -->
+  <!-- 네온 아톰 물리 전용 아이콘 -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%23161b22'/%3E%3Ccircle cx='256' cy='256' r='46' fill='%2358a6ff'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2379c0ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(30 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%23d2a8ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(90 256 256)'/%3E%3Cellipse cx='256' cy='256' rx='195' ry='72' fill='none' stroke='%2358a6ff' stroke-width='16' stroke-dasharray='8 6' transform='rotate(150 256 256)'/%3E%3Ccircle cx='390' cy='330' r='18' fill='%2379c0ff'/%3E%3Ccircle cx='256' cy='70' r='18' fill='%23d2a8ff'/%3E%3Ccircle cx='120' cy='330' r='18' fill='%2358a6ff'/%3E%3C/svg%3E">
 
@@ -45,9 +45,10 @@
       border-bottom: 1px solid #30363d;
     }
     header h1 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
       color: #58a6ff;
+      letter-spacing: -0.2px;
     }
     .header-actions {
       display: flex;
@@ -525,7 +526,7 @@
 <body>
 
   <header>
-    <h1>⚛️ BTMPHYSICSAITUTOR</h1>
+    <h1>⚛️ BTMPHYSICS-AI-TUTOR</h1>
     <div class="header-actions">
       <button class="header-btn" onclick="openReportModal()">학습 기록</button>
       <button class="header-btn" onclick="openResetModal()">대화 초기화</button>
@@ -672,7 +673,7 @@
    - 학생의 첫 질문(또는 사진 속 문제/도표)에 대해 질문의 핵심 원리, 공식 유도, 물리적 직관을 빠짐없이 충실하고 명쾌하게 설명하세요.
    - 대분류 주제는 ## 제목 형식으로, 소분류나 소주제는 ### 제목 형식으로 작성하세요.
    - 이미지가 첨부된 경우, 이미지 안의 조건과 물리량(질량, 거리, 저항값, 그래프 축 등)을 먼저 파악하고 이를 기반으로 단계별 풀이를 제공하세요.
-   - 강의록(레퍼런스 데이터)에 수록된 핵심 판서 및 풀이 순서를 최대한 존중하여 체계적으로 서술합니다.
+   - 아래 [학원 전용 강의 및 동영상 추출 레퍼런스 데이터]를 최우선으로 반영하여 설명하세요.
 2. 심화 탐구 및 사고 확장을 위한 후속 질문(추가 발문) 제시:
    - 답변의 맨 마지막 부분에, 학생이 방금 배운 개념을 제대로 체화했는지 점검하거나 연계된 물리 상황을 상상해볼 수 있는 '핵심 추가 질문 1~2가지'를 정중하게 건네주세요. (예: "만약 이 상황에서 저항이 병렬로 하나 더 연결된다면 전체 전류는 어떻게 바뀔까요?")
 3. 스타일 및 문장 규칙:
@@ -681,17 +682,17 @@
    - 텍스트 구분선('---', '===')은 절대 사용하지 마세요.
    - 모든 수학 공식과 물리 수식은 반드시 KaTeX 문법으로 작성하세요. (단독 수식: $$수식$$, 인라인 수식: $수식$)
 
-[시뮬레이션 요청 시: 컨트롤바 밀착 및 내부 수식 렌더링 규칙]
+[시뮬레이션 요청 시: 완전한 KaTeX 렌더링 및 컨트롤바 밀착 규칙]
 - 실시간 실행 가능한 독립형 HTML/Canvas 코드를 \`\`\`html 코드블록 안에 작성하세요.
-- 시뮬레이터 HTML 내부에는 반드시 KaTeX 라이브러리를 포함하고, 컨트롤바는 캔버스 바로 아래에 긴밀하게 붙여 배치하세요:
+- 시뮬레이터 내부에서 수식이 100% 렌더링되도록 반드시 아래 스크립트 템플릿 구조를 그대로 사용하세요:
 \`\`\`html
 <!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"><\/script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #161b22; color: #fff; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; padding: 6px; }
@@ -711,9 +712,18 @@
     </div>
   </div>
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      if (window.renderMathInElement) renderMathInElement(document.body);
-    });
+    function renderMathUI() {
+      if (window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError: false
+        });
+      }
+    }
+    window.addEventListener('load', renderMathUI);
     // 물리 수식 기반 Canvas 2D 애니메이션 코드
   <\/script>
 </body>
@@ -734,23 +744,37 @@
     let selectedImageBase64 = null;
     let selectedImageMime = null;
 
+    // data/list.json 및 md 파일 적재 상태 진단 로더
     async function loadLectureData() {
       try {
         const listRes = await fetch('/data/list.json');
-        if (!listRes.ok) return;
+        if (!listRes.ok) {
+          console.warn("[볼츠만물리] /data/list.json 파일을 찾을 수 없습니다. (상태 코드: " + listRes.status + ")");
+          return;
+        }
         const fileList = await listRes.json();
 
         let combinedText = "\n\n[학원 전용 강의 및 동영상 추출 레퍼런스 데이터]\n";
+        let loadedCount = 0;
+
         for (const filePath of fileList) {
-          const res = await fetch(filePath);
-          if (res.ok) {
-            const mdText = await res.text();
-            combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
+          try {
+            const res = await fetch(filePath);
+            if (res.ok) {
+              const mdText = await res.text();
+              combinedText += `\n--- 강의 파일: ${filePath} ---\n${mdText}\n`;
+              loadedCount++;
+            } else {
+              console.warn(`[볼츠만물리] 강의 파일 로드 실패: ${filePath} (${res.status})`);
+            }
+          } catch (fileErr) {
+            console.error(`[볼츠만물리] 파일 읽기 에러 (${filePath}):`, fileErr);
           }
         }
         lectureKnowledgeBase = combinedText;
+        console.log(`%c[볼츠만물리] 강의 데이터 적재 완료: ${loadedCount}개 파일 (총 ${combinedText.length}자)`, "color: #58a6ff; font-weight: bold;");
       } catch (err) {
-        console.log("강의 데이터 로드 건너뜀:", err);
+        console.error("[볼츠만물리] 강의 데이터 로드 중 전체 에러:", err);
       }
     }
 
@@ -901,7 +925,7 @@
         finalHtml += formatMarkdownText(beforeText);
 
         const codeContent = match[1];
-        const blob = new Blob([codeContent], { type: 'text/html' });
+        const blob = new Blob([codeContent], { type: 'text/html;charset=utf-8' });
         const blobUrl = URL.createObjectURL(blob);
 
         finalHtml += `
@@ -1124,7 +1148,7 @@
         return;
       }
 
-      let md = `# ⚛️ BTMPHYSICS AI TUTOR 학습 활동 보고서\n\n`;
+      let md = `# ⚛️ BTMPHYSICS-AI-TUTOR 학습 활동 보고서\n\n`;
       md += `> 학생 식별: ${studentName}\n`;
       md += `> 학습 일시: ${new Date().toLocaleString()}\n`;
       md += `> 종합 학습 점수: ${currentScore} / 100 점\n\n`;
